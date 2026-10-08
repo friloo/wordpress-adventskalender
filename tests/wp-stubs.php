@@ -19,10 +19,32 @@ function wp_timezone() { return new DateTimeZone( $GLOBALS['ak_tz'] ); }
 function current_datetime() { return new DateTimeImmutable( $GLOBALS['ak_now'], wp_timezone() ); }
 function current_time( $format ) { return current_datetime()->format( $format ); }
 function wp_date( $format, $ts = null ) {
-	$d = new DateTimeImmutable( '@' . $ts );
-	$d = $d->setTimezone( wp_timezone() );
-	$months = array( 1=>'Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember' );
-	return str_replace( 'F', $months[ (int) $d->format( 'n' ) ], $d->format( str_replace( 'F', '\F', $format ) ) );
+	// Wie WordPress: Monats- und Tagesnamen kommen aus der Locale,
+	// nicht aus PHPs date(). Sonst stünde im Deutschen „Dec“ statt „Dez“.
+	$d      = ( new DateTimeImmutable( '@' . $ts ) )->setTimezone( wp_timezone() );
+	$month  = (int) $d->format( 'n' );
+	$names  = array( 1 => 'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember' );
+	$abbrev = array( 1 => 'Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez' );
+	$days   = array( 'Sunday' => 'Sonntag', 'Monday' => 'Montag', 'Tuesday' => 'Dienstag', 'Wednesday' => 'Mittwoch', 'Thursday' => 'Donnerstag', 'Friday' => 'Freitag', 'Saturday' => 'Samstag' );
+
+	$out = '';
+	$len = strlen( $format );
+	for ( $i = 0; $i < $len; $i++ ) {
+		$char = $format[ $i ];
+		if ( '\\' === $char && $i + 1 < $len ) {
+			$out .= $format[ ++$i ];
+			continue;
+		}
+		switch ( $char ) {
+			case 'F': $out .= $names[ $month ]; break;
+			case 'M': $out .= $abbrev[ $month ]; break;
+			case 'l': $out .= $days[ $d->format( 'l' ) ]; break;
+			case 'D': $out .= mb_substr( $days[ $d->format( 'l' ) ], 0, 2 ); break;
+			default:  $out .= $d->format( $char );
+		}
+	}
+
+	return $out;
 }
 function get_option( $k, $d = false ) { return $GLOBALS['ak_options'][ $k ] ?? $d; }
 function update_option( $k, $v ) { $GLOBALS['ak_options'][ $k ] = $v; return true; }

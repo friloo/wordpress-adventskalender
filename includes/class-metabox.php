@@ -293,17 +293,23 @@ class Metabox {
 				</div>
 			</div>
 
-			<div class="ak-field">
-				<label class="ak-field__label"><?php esc_html_e( 'Motiv des geschlossenen Türchens', 'adventskalender' ); ?></label>
+			<?php $door_image_active = 'individual' === $layout; ?>
+			<div class="ak-field<?php echo $door_image_active ? '' : ' ak-field--muted'; ?>">
+				<span class="ak-field__label">
+					<?php esc_html_e( 'Motiv des geschlossenen Türchens', 'adventskalender' ); ?>
+					<?php if ( ! $door_image_active ) : ?>
+						<span class="ak-field__badge"><?php esc_html_e( 'derzeit ohne Wirkung', 'adventskalender' ); ?></span>
+					<?php endif; ?>
+				</span>
 				<?php Admin::media_field( 'ak_door_image', (int) self::value( $post->ID, Doors::META_DOOR_IMAGE, 0 ) ); ?>
 				<p class="description">
 					<?php
-					if ( 'individual' === $layout ) {
-						esc_html_e( 'Wird im aktuell gewählten Layout „Einzelbilder“ auf dem geschlossenen Türchen angezeigt.', 'adventskalender' );
+					if ( $door_image_active ) {
+						esc_html_e( 'Wird auf dem geschlossenen Türchen angezeigt.', 'adventskalender' );
 					} else {
 						printf(
-							/* translators: %s: Name des Layouts. */
-							esc_html__( 'Wird nur im Layout „Einzelbilder“ verwendet. Aktuell ist „%s“ eingestellt.', 'adventskalender' ),
+							/* translators: %s: Name des eingestellten Layouts. */
+							esc_html__( 'Nur im Layout „Einzelbilder“ sichtbar – eingestellt ist derzeit „%s“.', 'adventskalender' ),
 							esc_html( (string) ( Settings::layouts()[ $layout ] ?? $layout ) )
 						);
 					}

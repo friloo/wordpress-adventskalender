@@ -95,18 +95,21 @@ class Availability {
 	/**
 	 * Formatiert das Öffnungsdatum lokalisiert, z. B. „5. Dezember 2026“.
 	 *
-	 * @param int $day  Tag im Dezember.
-	 * @param int $year Kalenderjahr.
+	 * @param int    $day    Tag im Dezember.
+	 * @param int    $year   Kalenderjahr.
+	 * @param string $format Abweichendes Datumsformat (optional).
 	 */
-	public static function format_unlock_date( int $day, int $year ): string {
+	public static function format_unlock_date( int $day, int $year, string $format = '' ): string {
 		$time = self::unlock_time( $day, $year );
 
-		/**
-		 * Filtert das Datumsformat des Öffnungshinweises.
-		 *
-		 * @param string $format Datumsformat.
-		 */
-		$format = (string) apply_filters( 'adventskalender_date_format', 'j. F Y' );
+		if ( '' === $format ) {
+			/**
+			 * Filtert das Datumsformat des Öffnungshinweises.
+			 *
+			 * @param string $format Datumsformat.
+			 */
+			$format = (string) apply_filters( 'adventskalender_date_format', 'j. F Y' );
+		}
 
 		return (string) wp_date( $format, $time->getTimestamp() );
 	}
@@ -183,6 +186,29 @@ class Availability {
 			$year,
 			$reason
 		);
+	}
+
+	/**
+	 * Freischaltung aus Sicht eines nicht angemeldeten Besuchers.
+	 *
+	 * Die Redaktionsvorschau bleibt bewusst außen vor: im Backend will man
+	 * wissen, was Besucher sehen – nicht, was man selbst sehen darf.
+	 *
+	 * @param int      $day  Tag im Dezember.
+	 * @param int|null $year Kalenderjahr; null = Einstellung.
+	 */
+	public static function is_public_unlocked( int $day, ?int $year = null ): bool {
+		$year = null === $year ? (int) Settings::get( 'year' ) : $year;
+
+		if ( ! self::is_valid_day( $day ) ) {
+			return false;
+		}
+
+		if ( self::test_mode_active() ) {
+			return true;
+		}
+
+		return current_datetime() >= self::unlock_time( $day, $year );
 	}
 
 	/**

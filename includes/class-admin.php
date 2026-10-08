@@ -185,6 +185,62 @@ class Admin {
 	}
 
 	/**
+	 * Beschreibt den Inhalt eines Türchens als Symbol und Beschriftung.
+	 *
+	 * @param \WP_Post|null $post Türchen-Beitrag.
+	 * @return array{icon:string,label:string}
+	 */
+	public static function content_summary( ?\WP_Post $post ): array {
+		if ( ! $post instanceof \WP_Post ) {
+			return array(
+				'icon'  => 'dashicons-minus',
+				'label' => __( 'kein Inhalt', 'adventskalender' ),
+			);
+		}
+
+		$type     = Doors::sanitize_media_type( get_post_meta( $post->ID, Doors::META_MEDIA_TYPE, true ) );
+		$has_text = '' !== trim( (string) $post->post_content );
+
+		switch ( $type ) {
+			case 'image':
+				return array(
+					'icon'  => 'dashicons-format-image',
+					'label' => $has_text ? __( 'Bild & Text', 'adventskalender' ) : __( 'Bild', 'adventskalender' ),
+				);
+
+			case 'gallery':
+				$count = count( array_filter( explode( ',', (string) get_post_meta( $post->ID, Doors::META_GALLERY, true ) ) ) );
+
+				return array(
+					'icon'  => 'dashicons-format-gallery',
+					'label' => $count > 0
+						? sprintf(
+							/* translators: %d: Anzahl Bilder. */
+							_n( '%d Bild', '%d Bilder', $count, 'adventskalender' ),
+							$count
+						)
+						: __( 'Galerie', 'adventskalender' ),
+				);
+
+			case 'video':
+				return array(
+					'icon'  => 'dashicons-format-video',
+					'label' => $has_text ? __( 'Video & Text', 'adventskalender' ) : __( 'Video', 'adventskalender' ),
+				);
+		}
+
+		return $has_text
+			? array(
+				'icon'  => 'dashicons-editor-alignleft',
+				'label' => __( 'Text', 'adventskalender' ),
+			)
+			: array(
+				'icon'  => 'dashicons-minus',
+				'label' => __( 'kein Inhalt', 'adventskalender' ),
+			);
+	}
+
+	/**
 	 * Rendert die Übersichtsseite.
 	 */
 	public static function render_overview(): void {
@@ -270,34 +326,42 @@ class Admin {
 			</div>
 
 			<div class="ak-admin__stats">
-				<div class="ak-stat">
+				<div class="ak-stat is-good">
+					<span class="dashicons dashicons-yes-alt ak-stat__icon" aria-hidden="true"></span>
 					<span class="ak-stat__value"><?php echo esc_html( $filled . ' / ' . $count ); ?></span>
-					<span class="ak-stat__label"><?php esc_html_e( 'veröffentlicht & gefüllt', 'adventskalender' ); ?></span>
+					<span class="ak-stat__label"><?php esc_html_e( 'veröffentlicht und gefüllt', 'adventskalender' ); ?></span>
 				</div>
 				<div class="ak-stat<?php echo $drafts > 0 ? ' is-warning' : ''; ?>">
+					<span class="dashicons dashicons-edit ak-stat__icon" aria-hidden="true"></span>
 					<span class="ak-stat__value"><?php echo esc_html( (string) $drafts ); ?></span>
-					<span class="ak-stat__label"><?php esc_html_e( 'Entwürfe (noch nicht sichtbar)', 'adventskalender' ); ?></span>
+					<span class="ak-stat__label"><?php esc_html_e( 'Entwürfe, noch nicht sichtbar', 'adventskalender' ); ?></span>
 				</div>
 				<div class="ak-stat<?php echo ! empty( $missing ) ? ' is-warning' : ''; ?>">
+					<span class="dashicons dashicons-marker ak-stat__icon" aria-hidden="true"></span>
 					<span class="ak-stat__value"><?php echo esc_html( (string) count( $missing ) ); ?></span>
-					<span class="ak-stat__label"><?php esc_html_e( 'fehlende Türchen', 'adventskalender' ); ?></span>
+					<span class="ak-stat__label"><?php esc_html_e( 'noch nicht angelegt', 'adventskalender' ); ?></span>
 				</div>
-				<div class="ak-stat<?php echo Availability::test_mode_active() ? ' is-active' : ''; ?>">
+				<div class="ak-stat ak-stat--test<?php echo Availability::test_mode_active() ? ' is-active' : ''; ?>">
+					<span class="dashicons <?php echo Availability::test_mode_active() ? 'dashicons-visibility' : 'dashicons-hidden'; ?> ak-stat__icon" aria-hidden="true"></span>
 					<span class="ak-stat__value">
-						<?php echo Availability::test_mode_active() ? esc_html__( 'AN', 'adventskalender' ) : esc_html__( 'AUS', 'adventskalender' ); ?>
+						<?php echo Availability::test_mode_active() ? esc_html__( 'Testmodus an', 'adventskalender' ) : esc_html__( 'Testmodus aus', 'adventskalender' ); ?>
 					</span>
 					<span class="ak-stat__label">
-						<?php esc_html_e( 'Testmodus', 'adventskalender' ); ?>
-						<?php if ( current_user_can( 'manage_options' ) ) : ?>
-							<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="ak-stat__toggle">
-								<?php wp_nonce_field( 'adventskalender_toggle_test' ); ?>
-								<input type="hidden" name="action" value="adventskalender_toggle_test" />
-								<button type="submit" class="button-link">
-									<?php echo Availability::test_mode_active() ? esc_html__( 'ausschalten', 'adventskalender' ) : esc_html__( 'einschalten', 'adventskalender' ); ?>
-								</button>
-							</form>
-						<?php endif; ?>
+						<?php
+						echo Availability::test_mode_active()
+							? esc_html__( 'alle Türchen sind offen', 'adventskalender' )
+							: esc_html__( 'es gilt das Datum', 'adventskalender' );
+						?>
 					</span>
+					<?php if ( current_user_can( 'manage_options' ) ) : ?>
+						<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="ak-stat__toggle">
+							<?php wp_nonce_field( 'adventskalender_toggle_test' ); ?>
+							<input type="hidden" name="action" value="adventskalender_toggle_test" />
+							<button type="submit" class="button button-small">
+								<?php echo Availability::test_mode_active() ? esc_html__( 'ausschalten', 'adventskalender' ) : esc_html__( 'einschalten', 'adventskalender' ); ?>
+							</button>
+						</form>
+					<?php endif; ?>
 				</div>
 			</div>
 
@@ -326,82 +390,84 @@ class Admin {
 					$exists      = $post instanceof \WP_Post;
 					$published   = $exists && 'publish' === $post->post_status;
 					$has_content = $exists && Content::has_content( $post );
-					$unlocked    = Availability::is_unlocked( $day, $year );
-					$preview     = $exists ? Content::preview( $post ) : array(
-						'image' => 0,
-						'text'  => '',
-					);
+					// Besuchersicht: die Redaktionsvorschau würde sonst jedes
+					// Türchen als freigeschaltet anzeigen.
+					$unlocked    = Availability::is_public_unlocked( $day, $year );
+					$date_short  = Availability::format_unlock_date( $day, $year, 'j. M' );
+					$date_full   = Availability::format_unlock_date( $day, $year );
+					$is_today    = $day === $today;
 
-					$card_classes = array( 'ak-card' );
-					if ( ! $exists ) {
-						$card_classes[] = 'is-missing';
-					} elseif ( ! $published ) {
-						$card_classes[] = 'is-draft';
+					if ( ! $exists ) :
+						?>
+						<li class="ak-card is-missing<?php echo $is_today ? ' is-today' : ''; ?>">
+							<a class="ak-card__add" href="<?php echo esc_url( add_query_arg( array( 'post_type' => Doors::POST_TYPE, 'ak_day' => $day, 'ak_year' => $year ), admin_url( 'post-new.php' ) ) ); ?>">
+								<span class="ak-card__add-day"><?php echo esc_html( (string) $day ); ?></span>
+								<span class="ak-card__add-label">
+									<span class="dashicons dashicons-plus-alt2" aria-hidden="true"></span>
+									<?php esc_html_e( 'Türchen anlegen', 'adventskalender' ); ?>
+								</span>
+								<span class="ak-card__add-date"><?php echo esc_html( $date_short ); ?></span>
+							</a>
+						</li>
+						<?php
+						continue;
+					endif;
+
+					$summary = self::content_summary( $post );
+					$preview = Content::preview( $post );
+
+					if ( ! $published ) {
+						$state_class = 'is-draft';
+						$state_label = __( 'Entwurf', 'adventskalender' );
+						$state_pill  = 'draft';
 					} elseif ( ! $has_content ) {
-						$card_classes[] = 'is-empty';
+						$state_class = 'is-empty';
+						$state_label = __( 'leer', 'adventskalender' );
+						$state_pill  = 'empty';
 					} else {
-						$card_classes[] = 'is-ready';
-					}
-					if ( $day === $today ) {
-						$card_classes[] = 'is-today';
+						$state_class = 'is-ready';
+						$state_label = __( 'bereit', 'adventskalender' );
+						$state_pill  = 'ready';
 					}
 					?>
-					<li class="<?php echo esc_attr( implode( ' ', $card_classes ) ); ?>">
-						<div class="ak-card__head">
+					<li class="ak-card <?php echo esc_attr( $state_class ); ?><?php echo $is_today ? ' is-today' : ''; ?>">
+						<div class="ak-card__media">
+							<?php if ( $preview['image'] > 0 ) : ?>
+								<?php echo wp_get_attachment_image( (int) $preview['image'], 'medium', false, array( 'alt' => '' ) ); ?>
+							<?php else : ?>
+								<span class="ak-card__placeholder" aria-hidden="true">
+									<span class="dashicons <?php echo esc_attr( $summary['icon'] ); ?>"></span>
+								</span>
+							<?php endif; ?>
 							<span class="ak-card__day"><?php echo esc_html( (string) $day ); ?></span>
-							<span class="ak-card__date"><?php echo esc_html( Availability::format_unlock_date( $day, $year ) ); ?></span>
-							<?php if ( $day === $today ) : ?>
-								<span class="ak-card__badge ak-card__badge--today"><?php esc_html_e( 'heute', 'adventskalender' ); ?></span>
+							<?php if ( $is_today ) : ?>
+								<span class="ak-card__today"><?php esc_html_e( 'heute', 'adventskalender' ); ?></span>
 							<?php endif; ?>
 						</div>
 
-						<?php if ( $preview['image'] > 0 ) : ?>
-							<div class="ak-card__thumb">
-								<?php echo wp_get_attachment_image( (int) $preview['image'], 'medium', false, array( 'alt' => '' ) ); ?>
-							</div>
-						<?php endif; ?>
-
 						<div class="ak-card__body">
-							<?php if ( $exists ) : ?>
-								<p class="ak-card__title"><?php echo esc_html( get_the_title( $post ) ); ?></p>
-								<p class="ak-card__meta">
-									<?php
-									$type_labels = Doors::media_types();
-									$type        = Doors::sanitize_media_type( get_post_meta( $post->ID, Doors::META_MEDIA_TYPE, true ) );
-									echo esc_html( $type_labels[ $type ] ?? '' );
-									?>
-								</p>
-							<?php else : ?>
-								<p class="ak-card__title ak-card__title--muted"><?php esc_html_e( 'Noch kein Türchen angelegt', 'adventskalender' ); ?></p>
-							<?php endif; ?>
-
-							<p class="ak-card__status">
-								<?php if ( ! $exists ) : ?>
-									<span class="ak-pill ak-pill--missing"><?php esc_html_e( 'fehlt', 'adventskalender' ); ?></span>
-								<?php elseif ( ! $published ) : ?>
-									<span class="ak-pill ak-pill--draft"><?php esc_html_e( 'Entwurf', 'adventskalender' ); ?></span>
-								<?php elseif ( ! $has_content ) : ?>
-									<span class="ak-pill ak-pill--empty"><?php esc_html_e( 'leer', 'adventskalender' ); ?></span>
-								<?php else : ?>
-									<span class="ak-pill ak-pill--ready"><?php esc_html_e( 'bereit', 'adventskalender' ); ?></span>
-								<?php endif; ?>
-
+							<h3 class="ak-card__title"><?php echo esc_html( get_the_title( $post ) ); ?></h3>
+							<p class="ak-card__meta">
+								<span class="dashicons <?php echo esc_attr( $summary['icon'] ); ?>" aria-hidden="true"></span>
+								<span class="ak-card__type"><?php echo esc_html( $summary['label'] ); ?></span>
+								<span class="ak-card__sep" aria-hidden="true">·</span>
 								<?php if ( $unlocked ) : ?>
-									<span class="ak-pill ak-pill--open"><?php esc_html_e( 'freigeschaltet', 'adventskalender' ); ?></span>
+									<span class="ak-card__date is-open" title="<?php echo esc_attr( sprintf( /* translators: %s: Datum. */ __( 'Für Besucher offen seit %s', 'adventskalender' ), $date_full ) ); ?>">
+										<span class="dashicons dashicons-unlock" aria-hidden="true"></span><?php echo esc_html( $date_short ); ?>
+									</span>
 								<?php else : ?>
-									<span class="ak-pill ak-pill--closed"><?php esc_html_e( 'gesperrt', 'adventskalender' ); ?></span>
+									<span class="ak-card__date" title="<?php echo esc_attr( sprintf( /* translators: %s: Datum. */ __( 'Für Besucher gesperrt bis %s', 'adventskalender' ), $date_full ) ); ?>">
+										<span class="dashicons dashicons-lock" aria-hidden="true"></span><?php echo esc_html( $date_short ); ?>
+									</span>
 								<?php endif; ?>
 							</p>
 						</div>
 
 						<div class="ak-card__foot">
-							<?php if ( $exists && current_user_can( 'edit_post', $post->ID ) ) : ?>
+							<span class="ak-pill ak-pill--<?php echo esc_attr( $state_pill ); ?>"><?php echo esc_html( $state_label ); ?></span>
+							<?php if ( current_user_can( 'edit_post', $post->ID ) ) : ?>
 								<a class="button button-small" href="<?php echo esc_url( (string) get_edit_post_link( $post->ID ) ); ?>">
 									<?php esc_html_e( 'Bearbeiten', 'adventskalender' ); ?>
-								</a>
-							<?php else : ?>
-								<a class="button button-small button-primary" href="<?php echo esc_url( add_query_arg( array( 'post_type' => Doors::POST_TYPE, 'ak_day' => $day, 'ak_year' => $year ), admin_url( 'post-new.php' ) ) ); ?>">
-									<?php esc_html_e( 'Anlegen', 'adventskalender' ); ?>
 								</a>
 							<?php endif; ?>
 						</div>
@@ -595,7 +661,7 @@ class Admin {
 				$year = (int) get_post_meta( $post_id, Doors::META_YEAR, true );
 				if ( ! Content::has_content( $post ) ) {
 					echo '<span class="ak-pill ak-pill--empty">' . esc_html__( 'leer', 'adventskalender' ) . '</span>';
-				} elseif ( $day > 0 && $year > 0 && Availability::is_unlocked( $day, $year ) ) {
+				} elseif ( $day > 0 && $year > 0 && Availability::is_public_unlocked( $day, $year ) ) {
 					echo '<span class="ak-pill ak-pill--open">' . esc_html__( 'freigeschaltet', 'adventskalender' ) . '</span>';
 				} else {
 					echo '<span class="ak-pill ak-pill--closed">' . esc_html__( 'gesperrt', 'adventskalender' ) . '</span>';
@@ -713,9 +779,13 @@ class Admin {
 									<legend class="screen-reader-text"><?php esc_html_e( 'Layout wählen', 'adventskalender' ); ?></legend>
 									<?php foreach ( Settings::layouts() as $key => $label ) : ?>
 										<label class="ak-radio-card">
-											<input type="radio" name="<?php echo esc_attr( $name ); ?>[layout]" value="<?php echo esc_attr( $key ); ?>" <?php checked( $key, $s['layout'] ); ?> />
-											<span class="ak-radio-card__preview ak-radio-card__preview--<?php echo esc_attr( $key ); ?>" aria-hidden="true"></span>
-											<span class="ak-radio-card__label"><?php echo esc_html( $label ); ?></span>
+											<span class="ak-radio-card__preview ak-radio-card__preview--<?php echo esc_attr( $key ); ?>" aria-hidden="true">
+												<?php for ( $cell = 0; $cell < 6; $cell++ ) : ?><span></span><?php endfor; ?>
+											</span>
+											<span class="ak-radio-card__label">
+												<input type="radio" name="<?php echo esc_attr( $name ); ?>[layout]" value="<?php echo esc_attr( $key ); ?>" <?php checked( $key, $s['layout'] ); ?> />
+												<span><?php echo esc_html( $label ); ?></span>
+											</span>
 										</label>
 									<?php endforeach; ?>
 								</fieldset>
@@ -1005,7 +1075,8 @@ class Admin {
 		?>
 		<div class="ak-media-field" data-ak-media data-type="<?php echo esc_attr( $type ); ?>">
 			<input type="hidden" name="<?php echo esc_attr( $field_name ); ?>" value="<?php echo esc_attr( (string) $value ); ?>" data-ak-media-input />
-			<div class="ak-media-field__preview" data-ak-media-preview>
+			<?php // Die Klasse statt :empty – im Markup steht Leerraum, der Selektor würde nie greifen. ?>
+			<div class="ak-media-field__preview<?php echo $value > 0 ? ' has-media' : ''; ?>" data-ak-media-preview>
 				<?php if ( $url ) : ?>
 					<img src="<?php echo esc_url( (string) $url ); ?>" alt="" />
 				<?php elseif ( $value > 0 ) : ?>

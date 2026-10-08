@@ -65,6 +65,18 @@ check( 'Grund = preview',        Availability::reason( 24 ), Availability::REASO
 $GLOBALS['ak_logged_in'] = false; $GLOBALS['ak_user_can'] = false;
 check( 'Besucher sieht nichts',  count( Availability::unlocked_days() ), 0 );
 
+echo "\n== Besuchersicht ignoriert die Redaktionsvorschau ==\n";
+$GLOBALS['ak_now'] = '2026-12-05 10:00:00';
+update_option( Settings::OPTION, array( 'year' => 2026, 'door_count' => 24, 'editor_preview' => 1 ) );
+$GLOBALS['ak_logged_in'] = true; $GLOBALS['ak_user_can'] = true;
+check( 'Redakteur sieht Tag 20',            Availability::is_unlocked( 20 ), true );
+check( 'Besuchersicht: Tag 20 gesperrt',    Availability::is_public_unlocked( 20 ), false );
+check( 'Besuchersicht: Tag 5 offen',        Availability::is_public_unlocked( 5 ), true );
+check( 'Besuchersicht: Tag 25 ungültig',    Availability::is_public_unlocked( 25 ), false );
+update_option( Settings::OPTION, array( 'year' => 2026, 'door_count' => 24, 'test_mode' => 1 ) );
+check( 'Testmodus gilt auch für Besucher',  Availability::is_public_unlocked( 24 ), true );
+$GLOBALS['ak_logged_in'] = false; $GLOBALS['ak_user_can'] = false;
+
 echo "\n== Vorschau abgeschaltet ==\n";
 update_option( Settings::OPTION, array( 'year' => 2027, 'door_count' => 24, 'editor_preview' => 0 ) );
 $GLOBALS['ak_logged_in'] = true; $GLOBALS['ak_user_can'] = true;

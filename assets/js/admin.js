@@ -41,6 +41,7 @@
 					var attachment = frame.state().get( 'selection' ).first().toJSON();
 					input.value = attachment.id;
 					preview.innerHTML = '';
+					preview.classList.add( 'has-media' );
 
 					var thumb = attachment.sizes && ( attachment.sizes.medium || attachment.sizes.thumbnail || attachment.sizes.full );
 					if ( thumb && thumb.url ) {
@@ -69,6 +70,7 @@
 				event.preventDefault();
 				input.value = '';
 				preview.innerHTML = '';
+				preview.classList.remove( 'has-media' );
 				removeBtn.hidden = true;
 			} );
 		}

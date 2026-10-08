@@ -164,6 +164,20 @@ lokal erzeugten SVG-Platzhaltern (es wird nichts nachgeladen). Enthalten
 sind alle drei Layouts, mehrere Farbwelten, der Testmodus und eine Variante
 mit Hintergrundbild.
 
+## Backend-Vorschau
+
+Das Backend lässt sich genauso prüfen wie das Frontend – mit den echten
+wp-admin-Stylesheets, aber ohne WordPress-Installation:
+
+```bash
+php tools/admin-preview.php    # erzeugt tools/admin/*.html
+```
+
+Enthalten sind Übersicht, Einstellungsseite und die Türchen-Bearbeitung,
+jeweils mit dem echten Plugin-Markup im originalen Admin-Gerüst. Beim
+ersten Lauf lädt das Werkzeug die Original-Stylesheets von WordPress und
+legt sie lokal ab.
+
 ## Tests
 
 Die Logik lässt sich ohne WordPress-Installation prüfen – gegen schlanke

@@ -44,53 +44,68 @@
 
 .ak-admin__stats {
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 	gap: 12px;
 	margin: 0 0 18px;
 }
 
 .ak-stat {
-	padding: 14px 16px;
+	position: relative;
+	padding: 14px 16px 14px 48px;
 	border: 1px solid #dcdfe4;
 	border-radius: 10px;
 	background: #fff;
 	box-shadow: 0 1px 2px rgba(16, 24, 32, .04);
 }
 
+.ak-stat__icon {
+	position: absolute;
+	top: 15px;
+	left: 16px;
+	width: 20px;
+	height: 20px;
+	color: #a7aaad;
+	font-size: 20px;
+}
+
+.ak-stat.is-good .ak-stat__icon { color: #2a9d5c; }
+
 .ak-stat.is-warning {
 	border-color: #f0c36d;
 	background: #fffaf0;
 }
 
-.ak-stat.is-active {
+.ak-stat.is-warning .ak-stat__icon { color: #dba617; }
+
+.ak-stat--test.is-active {
 	border-color: #d26b4f;
 	background: #fff3ef;
 }
 
+.ak-stat--test.is-active .ak-stat__icon { color: #d26b4f; }
+
 .ak-stat__value {
 	display: block;
-	font-size: 1.6rem;
+	font-size: 1.3rem;
 	font-weight: 600;
-	line-height: 1.1;
+	line-height: 1.2;
 	color: #1d2733;
+}
+
+.ak-stat--test .ak-stat__value {
+	font-size: 1.05rem;
 }
 
 .ak-stat__label {
 	display: block;
-	margin-top: 4px;
+	margin-top: 3px;
 	color: #646970;
 	font-size: .82rem;
 	line-height: 1.4;
 }
 
 .ak-stat__toggle {
-	display: inline;
-	margin-left: .35em;
-}
-
-.ak-stat__toggle .button-link {
-	color: #2271b1;
-	text-decoration: underline;
+	margin: 10px 0 0;
 }
 
 /* ------------------------------------------------------------- Shortcode */
@@ -127,20 +142,24 @@
 
 .ak-admin__grid {
 	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-	gap: 14px;
+	/* Gleich hohe Zeilen: sonst richtet sich jede Reihe nach der
+	   höchsten Karte und das Raster wirkt zerrissen. */
+	grid-template-columns: repeat(auto-fill, minmax(208px, 1fr));
+	grid-auto-rows: 1fr;
+	gap: 16px;
 	margin: 0;
 	padding: 0;
 	list-style: none;
-	counter-reset: none;
 }
 
 .ak-card {
 	display: flex;
 	flex-direction: column;
 	overflow: hidden;
+	margin: 0;
 	border: 1px solid #dcdfe4;
-	border-radius: 12px;
+	border-left: 3px solid #dcdfe4;
+	border-radius: 10px;
 	background: #fff;
 	box-shadow: 0 1px 2px rgba(16, 24, 32, .05);
 	transition: box-shadow 160ms ease, transform 160ms ease;
@@ -151,93 +170,195 @@
 	transform: translateY(-1px);
 }
 
-.ak-card.is-missing {
-	border-style: dashed;
-	background: #fafbfc;
+.ak-card.is-draft { border-left-color: #dba617; }
+.ak-card.is-empty { border-left-color: #cc5d4d; }
+.ak-card.is-ready { border-left-color: #2a9d5c; }
+
+.ak-card.is-today {
+	outline: 2px solid #2271b1;
+	outline-offset: 1px;
 }
 
-.ak-card.is-draft  { border-left: 4px solid #dba617; }
-.ak-card.is-empty  { border-left: 4px solid #cc5d4d; }
-.ak-card.is-ready  { border-left: 4px solid #2a9d5c; }
-.ak-card.is-today  { outline: 2px solid #2271b1; outline-offset: 1px; }
+/* Medienbereich */
 
-.ak-card__head {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 8px;
-	align-items: baseline;
-	padding: 12px 14px 8px;
-}
-
-.ak-card__day {
-	font-size: 1.5rem;
-	font-weight: 700;
-	line-height: 1;
-	color: #1d2733;
-}
-
-.ak-card__date {
-	color: #646970;
-	font-size: .78rem;
-}
-
-.ak-card__badge--today {
-	margin-left: auto;
-	padding: .14em .6em;
-	border-radius: 999px;
-	background: #2271b1;
-	color: #fff;
-	font-size: .68rem;
-	font-weight: 600;
-	text-transform: uppercase;
-}
-
-.ak-card__thumb {
-	aspect-ratio: 16 / 9;
+.ak-card__media {
+	position: relative;
+	aspect-ratio: 16 / 10;
 	overflow: hidden;
 	background: #eef0f2;
 }
 
-.ak-card__thumb img {
+.ak-card__media img {
 	display: block;
 	width: 100%;
 	height: 100%;
 	object-fit: cover;
 }
 
+.ak-card__placeholder {
+	position: absolute;
+	inset: 0;
+	display: grid;
+	place-items: center;
+	background: linear-gradient(135deg, #f4f5f7, #e4e8eb);
+	color: #b4b9bf;
+}
+
+.ak-card__placeholder .dashicons {
+	width: 32px;
+	height: 32px;
+	font-size: 32px;
+}
+
+.ak-card__day {
+	position: absolute;
+	top: 8px;
+	left: 8px;
+	display: grid;
+	place-items: center;
+	min-width: 26px;
+	height: 26px;
+	padding: 0 7px;
+	border-radius: 999px;
+	background: rgba(17, 24, 32, .74);
+	color: #fff;
+	font-size: 13px;
+	font-weight: 700;
+	line-height: 1;
+}
+
+.ak-card__today {
+	position: absolute;
+	top: 9px;
+	right: 8px;
+	padding: .18em .6em;
+	border-radius: 999px;
+	background: #2271b1;
+	color: #fff;
+	font-size: 10px;
+	font-weight: 700;
+	letter-spacing: .05em;
+	text-transform: uppercase;
+}
+
+/* Text */
+
 .ak-card__body {
 	flex: 1 1 auto;
-	padding: 10px 14px;
+	padding: 11px 13px 4px;
 }
 
 .ak-card__title {
-	margin: 0 0 4px;
+	display: -webkit-box;
+	overflow: hidden;
+	margin: 0 0 6px;
+	font-size: 13.5px;
 	font-weight: 600;
 	line-height: 1.35;
+	color: #1d2733;
 	overflow-wrap: anywhere;
-}
-
-.ak-card__title--muted {
-	color: #8c8f94;
-	font-weight: 400;
-	font-style: italic;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
 }
 
 .ak-card__meta {
-	margin: 0 0 8px;
+	/* Eine Zeile, kein Umbruch: sonst wächst eine einzelne Karte und
+	   zieht die ganze Rasterzeile mit. */
+	display: flex;
+	flex-wrap: nowrap;
+	gap: 4px;
+	align-items: center;
+	margin: 0;
 	color: #646970;
-	font-size: .8rem;
+	font-size: 12px;
+	line-height: 1.5;
 }
 
-.ak-card__status {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 5px;
-	margin: 0;
+.ak-card__meta .dashicons {
+	flex: 0 0 auto;
+	width: 15px;
+	height: 15px;
+	font-size: 15px;
 }
+
+.ak-card__type {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.ak-card__sep {
+	flex: 0 0 auto;
+	color: #c3c7cb;
+}
+
+.ak-card__date {
+	display: inline-flex;
+	flex: 0 0 auto;
+	gap: 2px;
+	align-items: center;
+	white-space: nowrap;
+	color: #8c8f94;
+}
+
+.ak-card__date.is-open { color: #2a9d5c; }
 
 .ak-card__foot {
-	padding: 0 14px 14px;
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	justify-content: space-between;
+	padding: 10px 13px 12px;
+}
+
+/* Fehlender Tag */
+
+.ak-card.is-missing {
+	border: 1px dashed #c3c7cb;
+	background: #fafbfc;
+	box-shadow: none;
+}
+
+.ak-card__add {
+	display: flex;
+	flex: 1 1 auto;
+	flex-direction: column;
+	gap: 5px;
+	align-items: center;
+	justify-content: center;
+	min-height: 180px;
+	padding: 18px;
+	color: #646970;
+	text-align: center;
+	text-decoration: none;
+}
+
+.ak-card__add:hover,
+.ak-card__add:focus {
+	background: #f0f6fc;
+	color: #2271b1;
+}
+
+.ak-card__add-day {
+	font-size: 30px;
+	font-weight: 700;
+	line-height: 1;
+	color: #c3c7cb;
+}
+
+.ak-card__add:hover .ak-card__add-day { color: #2271b1; }
+
+.ak-card__add-label {
+	display: flex;
+	gap: 4px;
+	align-items: center;
+	font-size: 13px;
+	font-weight: 600;
+}
+
+.ak-card__add-date {
+	color: #8c8f94;
+	font-size: 12px;
 }
 
 .ak-pill {
@@ -337,41 +458,60 @@
 }
 
 .ak-radio-card input {
-	margin: 0 6px 0 0;
+	flex: 0 0 auto;
+	margin: 1px 0 0;
 }
 
 .ak-radio-card__preview {
 	display: grid;
+	margin-top: 0;
 	grid-template-columns: repeat(3, 1fr);
+	grid-template-rows: repeat(2, 1fr);
 	gap: 3px;
-	height: 54px;
-	margin: 8px 0;
+	height: 60px;
+	margin: 0 0 10px;
+	padding: 4px;
 	border-radius: 6px;
-	overflow: hidden;
+	background: #e9ecef;
 }
 
-.ak-radio-card__preview--classic {
-	background:
-		repeating-linear-gradient(90deg, #17492f 0 32%, transparent 32% 34%),
-		repeating-linear-gradient(0deg, #17492f 0 48%, transparent 48% 52%);
-	background-color: #d9e3dd;
+.ak-radio-card__preview > span {
+	border-radius: 3px;
+	background: #1f5f46;
 }
 
-.ak-radio-card__preview--mosaic {
-	background-image: linear-gradient(120deg, #2f6f8f, #86b7c9 45%, #e8d6a8);
-	box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .6);
+/* Klassisch: gleich aussehende Türchen. */
+.ak-radio-card__preview--classic > span {
+	background: linear-gradient(155deg, #246d50, #123a27);
+	box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .16);
 }
 
-.ak-radio-card__preview--individual {
-	background:
-		linear-gradient(135deg, #b85c4c 50%, transparent 50%),
-		linear-gradient(135deg, #2f6f55 50%, transparent 50%) 50% 0 / 34% 100% no-repeat,
-		linear-gradient(135deg, #3f5f8f 50%, transparent 50%) 100% 0 / 33% 100% no-repeat;
-	background-color: #e5e7ea;
+/* Mosaik: ein Bild, über alle Zellen verteilt – dieselbe Rechnung wie im
+   Frontend, nur in klein. */
+.ak-radio-card__preview--mosaic > span {
+	background-image: linear-gradient(120deg, #2f6f8f, #8fc0d0 45%, #efdcb0);
+	background-size: 300% 200%;
 }
+
+.ak-radio-card__preview--mosaic > span:nth-child(1) { background-position: 0% 0%; }
+.ak-radio-card__preview--mosaic > span:nth-child(2) { background-position: 50% 0%; }
+.ak-radio-card__preview--mosaic > span:nth-child(3) { background-position: 100% 0%; }
+.ak-radio-card__preview--mosaic > span:nth-child(4) { background-position: 0% 100%; }
+.ak-radio-card__preview--mosaic > span:nth-child(5) { background-position: 50% 100%; }
+.ak-radio-card__preview--mosaic > span:nth-child(6) { background-position: 100% 100%; }
+
+/* Einzelbilder: jedes Türchen ein eigenes Motiv. */
+.ak-radio-card__preview--individual > span:nth-child(1) { background: linear-gradient(135deg, #b85c4c, #e0a07c); }
+.ak-radio-card__preview--individual > span:nth-child(2) { background: linear-gradient(135deg, #2f6f55, #8bc3a2); }
+.ak-radio-card__preview--individual > span:nth-child(3) { background: linear-gradient(135deg, #3f5f8f, #9db6da); }
+.ak-radio-card__preview--individual > span:nth-child(4) { background: linear-gradient(135deg, #8a5a2b, #d9ab6c); }
+.ak-radio-card__preview--individual > span:nth-child(5) { background: linear-gradient(135deg, #6b4a8f, #b79ad6); }
+.ak-radio-card__preview--individual > span:nth-child(6) { background: linear-gradient(135deg, #2f6f8f, #8fc0d0); }
 
 .ak-radio-card__label {
-	display: block;
+	display: flex;
+	gap: 8px;
+	align-items: flex-start;
 	font-size: .86rem;
 	line-height: 1.4;
 }
@@ -382,7 +522,7 @@
 	max-width: 420px;
 }
 
-.ak-media-field__preview:not(:empty) {
+.ak-media-field__preview.has-media {
 	display: inline-block;
 	max-width: 240px;
 	margin: 0 0 8px;
@@ -663,4 +803,31 @@ tr[data-ak-when-theme][hidden] {
 
 .ak-brand-contrast li.is-low .ak-brand-contrast__ratio {
 	color: #b32d2e;
+}
+
+/* Felder, die in der aktuellen Konfiguration nichts bewirken. */
+
+.ak-field--muted {
+	padding: 12px 14px;
+	border: 1px dashed #dcdfe4;
+	border-radius: 8px;
+	background: #fafbfc;
+}
+
+.ak-field--muted .ak-field__label,
+.ak-field--muted .description {
+	color: #787c82;
+}
+
+.ak-field__badge {
+	display: inline-block;
+	margin-left: 6px;
+	padding: .12em .55em;
+	border-radius: 999px;
+	background: #eef0f2;
+	color: #646970;
+	font-size: .72rem;
+	font-weight: 600;
+	letter-spacing: .01em;
+	vertical-align: 1px;
 }

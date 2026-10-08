@@ -97,14 +97,19 @@ function parse_errors( string $html ): array {
 // Testdaten: ein paar Türchen, eines fehlt, eines ist Entwurf.
 $GLOBALS['ak_attachment_ids'] = range( 1, 31 );
 $GLOBALS['ak_doors'] = array();
-foreach ( array( 1, 2, 4, 5 ) as $d ) {
+// Tag 20 liegt bewusst in der Zukunft, damit beide Schlosszustände auftreten.
+foreach ( array( 1, 2, 4, 5, 20 ) as $d ) {
 	$GLOBALS['ak_doors'][ $d ] = new WP_Post( array(
 		'ID' => 100 + $d, 'post_title' => "Türchen <$d> & mehr",
 		'post_content' => "Inhalt $d", 'post_status' => 4 === $d ? 'draft' : 'publish',
 	) );
+	// Tag 5 bewusst ohne Bild: dort muss der Platzhalter greifen.
 	$GLOBALS['ak_meta'][ 100 + $d ] = array(
-		'_ak_day' => $d, '_ak_year' => 2026, '_ak_media_type' => 'image',
-		'_ak_image' => 11, '_ak_preview_image' => 12, '_ak_preview_text' => "Teaser $d",
+		'_ak_day' => $d, '_ak_year' => 2026,
+		'_ak_media_type' => 5 === $d ? 'none' : 'image',
+		'_ak_image' => 5 === $d ? 0 : 11,
+		'_ak_preview_image' => 5 === $d ? 0 : 12,
+		'_ak_preview_text' => "Teaser $d",
 		'_ak_layout' => 'media_top', '_ak_link_url' => 'https://example.test/x',
 	);
 }
@@ -122,7 +127,17 @@ $cards = preg_match_all( '/<li class="ak-card[ "]/', $r['html'] );
 check( '24 Karten', 24 === $cards, $cards . ' gefunden' );
 check( 'Titel ist escaped', false === strpos( $r['html'], 'Türchen <1> & mehr' ) && false !== strpos( $r['html'], '&lt;1&gt;' ) );
 check( 'Entwurf markiert', false !== strpos( $r['html'], 'ak-pill--draft' ) );
-check( 'fehlende Tage markiert', false !== strpos( $r['html'], 'ak-pill--missing' ) );
+$missing_cards = preg_match_all( '/<li class="ak-card is-missing/', $r['html'] );
+check( 'fehlende Tage als Anlegen-Karte', 19 === $missing_cards, $missing_cards . ' gefunden' );
+check( 'Anlegen-Karte verlinkt mit Tag und Jahr', false !== strpos( $r['html'], 'ak_day=3' ) && false !== strpos( $r['html'], 'ak_year=2026' ) );
+check( 'alle Karten gleich aufgebaut', 5 === substr_count( $r['html'], 'ak-card__media' ) );
+check( 'Platzhalter statt leerem Bildbereich', 1 === substr_count( $r['html'], 'ak-card__placeholder' ) );
+check( 'Inhaltstyp wird benannt', false !== strpos( $r['html'], 'dashicons-format-image' ) );
+check( 'Schlosssymbol zeigt Freischaltung', false !== strpos( $r['html'], 'dashicons-unlock' ) && false !== strpos( $r['html'], 'dashicons-lock' ) );
+// Wichtig: Im Backend zählt die Besuchersicht, nicht die eigene.
+// Angemeldet (ak_user_can = true) greift sonst die Redaktionsvorschau.
+check( 'Besuchersicht statt Redaktionsvorschau', false !== strpos( $r['html'], 'Für Besucher gesperrt bis' ) );
+check( 'offene Tage als offen markiert', false !== strpos( $r['html'], 'Für Besucher offen seit' ) );
 check( 'Shortcode-Hinweis', false !== strpos( $r['html'], '[adventskalender]' ) );
 check( 'Nonce in Formularen', substr_count( $r['html'], 'testnonce' ) >= 2 );
 
@@ -141,6 +156,28 @@ check( 'alle Layouts wählbar', 3 === substr_count( $r['html'], 'name="adventska
 check( 'alle Farbwelten wählbar', 5 === substr_count( $r['html'], '<option value="' ) - 0 || true );
 check( 'Settings-API-Gruppe gesetzt', false !== strpos( $r['html'], 'adventskalender_settings_group' ) );
 check( 'Testmodus-Warnung vorhanden', false !== strpos( $r['html'], 'Nur zum Testen verwenden' ) );
+
+echo "\n== Inhaltsbeschreibung der Karten ==\n";
+$sum = Admin::content_summary( $GLOBALS['ak_doors'][1] );
+check( 'Bild mit Text erkannt', 'dashicons-format-image' === $sum['icon'] && false !== strpos( $sum['label'], 'Bild' ) );
+check( 'fehlendes Türchen abgefangen', 'dashicons-minus' === Admin::content_summary( null )['icon'] );
+$GLOBALS['ak_meta'][101]['_ak_media_type'] = 'gallery';
+$GLOBALS['ak_meta'][101]['_ak_gallery'] = '11,12,13';
+check( 'Galerie zählt Bilder', false !== strpos( Admin::content_summary( $GLOBALS['ak_doors'][1] )['label'], '3' ) );
+$GLOBALS['ak_meta'][101]['_ak_media_type'] = 'video';
+check( 'Video erkannt', 'dashicons-format-video' === Admin::content_summary( $GLOBALS['ak_doors'][1] )['icon'] );
+$GLOBALS['ak_meta'][101]['_ak_media_type'] = 'none';
+check( 'reiner Text erkannt', 'dashicons-editor-alignleft' === Admin::content_summary( $GLOBALS['ak_doors'][1] )['icon'] );
+$leer = new WP_Post( array( 'ID' => 999, 'post_title' => 'x', 'post_content' => '' ) );
+check( 'leeres Türchen erkannt', 'dashicons-minus' === Admin::content_summary( $leer )['icon'] );
+$GLOBALS['ak_meta'][101]['_ak_media_type'] = 'image';
+
+echo "\n== Leere Medienfelder ==\n";
+ob_start(); Admin::media_field( 'leer', 0 ); $empty_field = ob_get_clean();
+ob_start(); Admin::media_field( 'voll', 11 ); $full_field = ob_get_clean();
+check( 'leeres Feld ohne has-media', false === strpos( $empty_field, 'has-media' ) );
+check( 'gefülltes Feld mit has-media', false !== strpos( $full_field, 'has-media' ) );
+check( 'leeres Feld versteckt Entfernen', false !== strpos( $empty_field, 'data-ak-media-remove hidden' ) );
 
 echo "\n== Markenfarbe in den Einstellungen ==\n";
 update_option( Settings::OPTION, array_merge( Settings::get(), array(
