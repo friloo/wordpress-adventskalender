@@ -12,6 +12,13 @@
 	var REST = CONFIG.restUrl || '';
 	var REDUCED = window.matchMedia && window.matchMedia( '(prefers-reduced-motion: reduce)' ).matches;
 
+	// Name des Abfrageparameters für verlinkbare Türchen (serverseitig
+	// über den Filter adventskalender_url_parameter änderbar).
+	var PARAM = CONFIG.param || 'tuerchen';
+
+	// Nur der erste Kalender einer Seite fasst die Adresszeile an.
+	var urlTaken = false;
+
 	/**
 	 * Setzt Platzhalter wie %d / %1$d / %2$s in übersetzten Texten.
 	 */
@@ -75,6 +82,10 @@
 		this.cache = {};
 		this.pending = {};
 		this.currentDay = null;
+		this.ownsUrl = ! urlTaken;
+		this.urlHandled = false;
+		this.pushedState = false;
+		this.ignoreNextPop = false;
 		this.lastFocus = null;
 		this.toastTimer = null;
 		this.requestId = 0;
@@ -92,8 +103,13 @@
 			} );
 		} );
 
+		if ( this.ownsUrl ) {
+			urlTaken = true;
+		}
+
 		this.restoreOpened();
 		this.bindLightbox();
+		this.bindHistory();
 		this.applyMosaic();
 		this.syncState();
 
@@ -106,6 +122,125 @@
 				}, 150 );
 			} );
 		}
+	};
+
+	/**
+	 * Liest den verlinkten Tag aus der Adresszeile.
+	 *
+	 * @return {number|null}
+	 */
+	Calendar.prototype.dayFromUrl = function () {
+		if ( ! window.URLSearchParams ) {
+			return null;
+		}
+
+		var day = parseInt( new URLSearchParams( window.location.search ).get( PARAM ), 10 );
+
+		return ( day >= 1 && day <= 31 ) ? day : null;
+	};
+
+	/**
+	 * Schreibt oder entfernt den Tag in der Adresszeile.
+	 *
+	 * @param {number|null} day     Tag, oder null zum Entfernen.
+	 * @param {boolean}     replace Eintrag ersetzen statt anfügen.
+	 */
+	Calendar.prototype.writeUrl = function ( day, replace ) {
+		if ( ! this.ownsUrl || ! window.history || ! window.URL ) {
+			return;
+		}
+
+		try {
+			var url = new URL( window.location.href );
+			if ( day ) {
+				url.searchParams.set( PARAM, String( day ) );
+			} else {
+				url.searchParams.delete( PARAM );
+			}
+
+			var state = day ? { adventskalender: day } : {};
+			if ( replace ) {
+				window.history.replaceState( state, '', url.toString() );
+			} else {
+				window.history.pushState( state, '', url.toString() );
+				this.pushedState = true;
+			}
+		} catch ( e ) {
+			/* Ohne History-API bleibt die Adresszeile unverändert. */
+		}
+	};
+
+	/**
+	 * Reagiert auf Vor- und Zurück-Navigation.
+	 *
+	 * Ohne das verlässt die Zurück-Geste auf dem Telefon die ganze Seite,
+	 * statt nur die Lightbox zu schließen.
+	 */
+	Calendar.prototype.bindHistory = function () {
+		if ( ! this.ownsUrl || ! window.history ) {
+			return;
+		}
+
+		var self = this;
+		window.addEventListener( 'popstate', function () {
+			if ( self.ignoreNextPop ) {
+				self.ignoreNextPop = false;
+				return;
+			}
+
+			var day = self.dayFromUrl();
+			if ( day && self.openableDays().indexOf( day ) !== -1 ) {
+				self.openFromUrl( day );
+			} else {
+				self.closeLightbox( { fromHistory: true } );
+			}
+		} );
+	};
+
+	/**
+	 * Öffnet ein verlinktes Türchen, ohne die Adresszeile erneut zu ändern.
+	 *
+	 * @param {number} day Tag.
+	 */
+	Calendar.prototype.openFromUrl = function ( day ) {
+		var door = this.root.querySelector( '.ak-door[data-day="' + day + '"]' );
+		if ( ! door ) {
+			return;
+		}
+
+		if ( 'locked' === door.getAttribute( 'data-state' ) ) {
+			this.toast( door.getAttribute( 'data-notice' ) || '' );
+			return;
+		}
+
+		this.markOpen( door, day );
+		this.rememberOpened( day );
+		this.openLightbox( day, door, { fromHistory: true } );
+	};
+
+	/**
+	 * Prüft beim Laden, ob ein Türchen verlinkt wurde.
+	 *
+	 * Wird erst nach dem Zustandsabgleich aufgerufen: eine gecachte Seite
+	 * könnte das Türchen sonst fälschlich für gesperrt halten.
+	 */
+	Calendar.prototype.maybeOpenFromUrl = function () {
+		if ( ! this.ownsUrl || this.urlHandled ) {
+			return;
+		}
+		this.urlHandled = true;
+
+		var day = this.dayFromUrl();
+		if ( ! day ) {
+			return;
+		}
+
+		var door = this.root.querySelector( '.ak-door[data-day="' + day + '"]' );
+		if ( door && door.scrollIntoView ) {
+			door.scrollIntoView( { block: 'center', behavior: REDUCED ? 'auto' : 'smooth' } );
+		}
+
+		this.openFromUrl( day );
 	};
 
 	/**
@@ -240,11 +375,13 @@
 	 * Autorität darüber, welches Türchen offen ist.
 	 */
 	Calendar.prototype.syncState = function () {
+		var self = this;
+
 		if ( ! REST || ! window.fetch ) {
+			this.maybeOpenFromUrl();
 			return;
 		}
 
-		var self = this;
 		var url = REST + 'state?year=' + encodeURIComponent( this.year );
 
 		window.fetch( url, { credentials: 'same-origin', headers: this.headers() } )
@@ -252,16 +389,17 @@
 				return response.ok ? response.json() : null;
 			} )
 			.then( function ( data ) {
-				if ( ! data || ! Array.isArray( data.days ) ) {
-					return;
+				if ( data && Array.isArray( data.days ) ) {
+					data.days.forEach( function ( entry ) {
+						self.updateDoorState( entry );
+					} );
+					self.applyMosaic();
 				}
-				data.days.forEach( function ( entry ) {
-					self.updateDoorState( entry );
-				} );
-				self.applyMosaic();
+				self.maybeOpenFromUrl();
 			} )
 			.catch( function () {
-				/* Der serverseitig gerenderte Zustand bleibt gültig. */
+				// Der serverseitig gerenderte Zustand bleibt gültig.
+				self.maybeOpenFromUrl();
 			} );
 	};
 
@@ -398,16 +536,25 @@
 	/**
 	 * Öffnet die Lightbox für einen Tag.
 	 */
-	Calendar.prototype.openLightbox = function ( day, door ) {
+	Calendar.prototype.openLightbox = function ( day, door, options ) {
 		if ( ! this.lightbox ) {
 			return;
 		}
 
+		options = options || {};
+
 		var self = this;
 		var token = ++this.requestId;
+		// Beim Blättern innerhalb der Lightbox wird der Verlaufseintrag
+		// ersetzt, nicht angehängt – einmal „zurück“ schließt dann alles.
+		var wasOpen = false === this.lightbox.hidden;
 
 		this.currentDay = day;
 		this.lastFocus = door || document.activeElement;
+
+		if ( ! options.fromHistory ) {
+			this.writeUrl( day, wasOpen );
+		}
 
 		this.lightbox.hidden = false;
 		document.documentElement.classList.add( 'ak-no-scroll' );
@@ -667,10 +814,12 @@
 	/**
 	 * Schließt die Lightbox und gibt den Fokus zurück.
 	 */
-	Calendar.prototype.closeLightbox = function () {
+	Calendar.prototype.closeLightbox = function ( options ) {
 		if ( ! this.lightbox || this.lightbox.hidden ) {
 			return;
 		}
+
+		options = options || {};
 
 		++this.requestId;
 		this.lightbox.hidden = true;
@@ -693,6 +842,20 @@
 			this.lastFocus.focus();
 		}
 		this.currentDay = null;
+
+		if ( options.fromHistory ) {
+			return;
+		}
+
+		if ( this.pushedState && window.history ) {
+			// Den eigenen Eintrag wieder entfernen; das dadurch ausgelöste
+			// popstate darf nicht erneut schließen.
+			this.pushedState = false;
+			this.ignoreNextPop = true;
+			window.history.back();
+		} else {
+			this.writeUrl( null, true );
+		}
 	};
 
 	/**

@@ -135,6 +135,42 @@ check( 'ungültiges Layout verworfen', false !== strpos( $evil, 'ak-calendar--cl
 check( 'ungültiges Theme verworfen', false === strpos( $evil, 'nordic&quot;' ) && false !== strpos( $evil, 'ak-calendar--theme-elegant' ) );
 check( 'Spalten auf Einstellung zurück', false !== strpos( $evil, '--ak-cols:6' ) );
 
+echo "\n== Bildgrößen für Mosaik und Hintergrund ==\n";
+// Ein großes Foto mit den üblichen WordPress-Zwischengrößen.
+$GLOBALS['ak_attachment_meta'][11] = array(
+	'width'  => 4032,
+	'height' => 3024,
+	'sizes'  => array(
+		'thumbnail'   => array( 'width' => 150 ),
+		'medium'      => array( 'width' => 300 ),
+		'medium_large' => array( 'width' => 768 ),
+		'large'       => array( 'width' => 1024 ),
+		'1536x1536'   => array( 'width' => 1536 ),
+		'2048x2048'   => array( 'width' => 2048 ),
+	),
+);
+check( 'kleinste ausreichende Größe gewählt', false !== strpos( Renderer::image_url_for_width( 11, 1800 ), 'bild-11' ) );
+$GLOBALS['ak_image_url_cb'] = function ( $id, $size ) { return 'https://example.test/' . $size . '.jpg'; };
+check( 'nimmt 2048, nicht das Original', 'https://example.test/2048x2048.jpg' === Renderer::image_url_for_width( 11, 1800 ) );
+check( 'nimmt large bei kleinerem Ziel',  'https://example.test/large.jpg' === Renderer::image_url_for_width( 11, 900 ) );
+check( 'nimmt thumbnail bei winzigem Ziel', 'https://example.test/thumbnail.jpg' === Renderer::image_url_for_width( 11, 100 ) );
+check( 'Original, wenn nichts groß genug', 'https://example.test/full.jpg' === Renderer::image_url_for_width( 11, 5000 ) );
+
+// Bild ohne erzeugte Zwischengrößen.
+$GLOBALS['ak_attachment_meta'][12] = array( 'width' => 900, 'height' => 600, 'sizes' => array() );
+check( 'ohne Zwischengrößen das Original', 'https://example.test/full.jpg' === Renderer::image_url_for_width( 12, 1800 ) );
+check( 'ohne Metadaten das Original',      'https://example.test/full.jpg' === Renderer::image_url_for_width( 13, 1800 ) );
+check( 'ungültige ID -> leer',             '' === Renderer::image_url_for_width( 999, 1800 ) );
+check( 'ID 0 -> leer',                     '' === Renderer::image_url_for_width( 0, 1800 ) );
+
+// Im Mosaik wird die gewählte Größe auch tatsächlich benutzt.
+update_option( Settings::OPTION, array_merge( Settings::get(), array( 'layout' => 'mosaic', 'mosaic_image' => 11 ) ) );
+$mosaic_sized = Renderer::shortcode( array() );
+check( 'Mosaik nutzt nicht das Original', false === strpos( $mosaic_sized, 'full.jpg' ) );
+check( 'Mosaik nutzt die passende Größe', false !== strpos( $mosaic_sized, '2048x2048.jpg' ) );
+update_option( Settings::OPTION, array_merge( Settings::get(), array( 'layout' => 'classic', 'mosaic_image' => 0 ) ) );
+$GLOBALS['ak_image_url_cb'] = null;
+
 echo "\n== Bericht-Layout (Titelbild, Text, Bilder im Text) ==\n";
 check( 'Bericht ist Voreinstellung', 'report' === \Adventskalender\Doors::DEFAULT_LAYOUT );
 check( 'unbekanntes Layout -> Bericht', 'report' === \Adventskalender\Doors::sanitize_layout( 'quatsch' ) );
@@ -269,6 +305,18 @@ check( 'externer Link mit noopener', false !== strpos( $cta, 'rel="noopener nore
 $GLOBALS['ak_meta'][101]['_ak_link_url'] = 'https://example.test/intern';
 $cta2 = Content::render( $GLOBALS['ak_doors'][1], 1 );
 check( 'interner Link ohne target', false === strpos( $cta2, 'target="_blank"' ) );
+
+echo "\n== Laufzeitdaten für das Frontend ==\n";
+$inline = $GLOBALS['ak_inline_scripts'][0] ?? '';
+check( 'Daten werden eingebunden', 1 === count( $GLOBALS['ak_inline_scripts'] ), count( $GLOBALS['ak_inline_scripts'] ) . ' Einbindungen' );
+preg_match( '/window\.AdventskalenderData = (.*);$/', $inline, $m );
+$runtime = json_decode( $m[1] ?? '{}', true );
+check( 'gültiges JSON', is_array( $runtime ) && ! empty( $runtime ) );
+check( 'REST-Basis enthalten', isset( $runtime['restUrl'] ) && false !== strpos( $runtime['restUrl'], 'adventskalender/v1/' ) );
+check( 'kein Nonce für Abgemeldete', '' === ( $runtime['nonce'] ?? 'x' ) );
+check( 'URL-Parameter enthalten', 'tuerchen' === ( $runtime['param'] ?? '' ) );
+check( 'Übersetzungen enthalten', isset( $runtime['i18n']['openDoor'], $runtime['i18n']['lockedDoor'], $runtime['i18n']['alreadyOpen'] ) );
+check( 'keine Inhalte in den Laufzeitdaten', false === strpos( $inline, 'GEHEIMNIS' ) && false === strpos( $inline, 'Fließtext' ) );
 
 printf( "\n%d bestanden, %d fehlgeschlagen\n", $pass, $fail );
 exit( $fail > 0 ? 1 : 0 );

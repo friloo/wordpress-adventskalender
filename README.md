@@ -27,6 +27,9 @@ oder Text mit Bildern.
   Escape und Pfeiltasten, `prefers-reduced-motion`.
 * **Cache-fest:** Der Zustand wird beim Laden über eine nicht gecachte REST-Route
   nachgeglichen – auch hinter aggressivem Page-Cache zeigt der Kalender den richtigen Tag.
+* **Verlinkbare Türchen:** Ein geöffnetes Türchen steht in der Adresszeile
+  (`?tuerchen=7`). Der Link lässt sich teilen, und die Zurück-Taste schließt
+  die Lightbox, statt die Seite zu verlassen.
 
 ## Installation
 
@@ -65,6 +68,21 @@ Anforderungen: WordPress 6.2+, PHP 7.4+.
 
 Im Block-Editor nach **Adventskalender** suchen. Alle Optionen stehen in der
 Seitenleiste; leer gelassene Felder übernehmen die globalen Einstellungen.
+
+## Türchen verlinken
+
+Wird ein Türchen geöffnet, hängt das Plugin `?tuerchen=7` an die Adresse.
+Damit lässt sich ein einzelner Tag verlinken – wer den Link öffnet, landet
+beim Kalender mit geöffnetem Türchen. Ist der Tag noch gesperrt, erscheint
+nur der Hinweis mit dem Öffnungsdatum; der Inhalt bleibt geschützt.
+
+Nebeneffekt, der auf dem Telefon den Unterschied macht: Die Zurück-Geste
+schließt die Lightbox, statt die ganze Seite zu verlassen. Beim Blättern
+innerhalb der Lightbox wird der Verlaufseintrag ersetzt – einmal „zurück"
+führt also immer zum Kalender, nicht durch alle angesehenen Türchen.
+
+Den Parameternamen ändert der Filter `adventskalender_url_parameter`.
+Stehen mehrere Kalender auf einer Seite, nutzt nur der erste die Adresszeile.
 
 ## Farbwelt „Markenfarbe"
 
@@ -201,6 +219,7 @@ Den Testmodus kann man direkt auf der Übersichtsseite ein- und ausschalten.
 | `adventskalender_is_unlocked`         | Freischaltung eines Türchens überschreiben |
 | `adventskalender_arrangement`         | Anordnung der Türchen bestimmen            |
 | `adventskalender_date_format`         | Datumsformat der Hinweise                  |
+| `adventskalender_url_parameter`       | Abfrageparameter für verlinkte Türchen     |
 | `adventskalender_door_payload`        | Daten eines Türchens anpassen              |
 | `adventskalender_door_html`           | Lightbox-Markup anpassen                   |
 | `adventskalender_manage_capability`   | Capability der Türchen-Verwaltung und der REST-Sperre |
@@ -238,12 +257,21 @@ legt sie lokal ab.
 
 ## Tests
 
-Die Logik lässt sich ohne WordPress-Installation prüfen – gegen schlanke
-Attrappen der benötigten WordPress-Funktionen:
+Zwei Suiten, beide ohne WordPress-Installation lauffähig:
 
 ```bash
-php tests/run.php
+php tests/run.php          # 361 Tests der PHP-Logik
+node tests/browser/run.js  # 13 Tests des Frontends im echten Browser
 ```
+
+Die PHP-Tests laufen gegen schlanke Attrappen der benötigten
+WordPress-Funktionen. Die Browser-Tests erzeugen Fixtures aus dem echten
+Renderer, liefern sie über einen lokalen Webserver aus und steuern
+Chromium per Playwright. Sie prüfen, was sich in PHP nicht abbilden lässt:
+Lightbox, Tastaturbedienung, Fokus-Falle, Mosaikberechnung, den
+Zustandsabgleich gecachter Seiten, verlinkte Türchen und die
+Zurück-Navigation. Fehlt Playwright, melden sie das und beenden sich,
+ohne zu scheitern.
 
 Abgedeckt sind unter anderem:
 
@@ -262,3 +290,5 @@ Abgedeckt sind unter anderem:
 * Rauchtest der Adminoberfläche: Übersicht, Einstellungen, Metaboxen und
   Listenspalten rendern fehlerfrei, escapen Titel und brechen ohne
   Berechtigung ab
+* Auswahl der Bildgröße für Mosaik und Hintergrund
+* Absicherung der REST-Routen, wenn der Block-Editor aktiv ist

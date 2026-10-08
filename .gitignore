@@ -10,3 +10,4 @@ Thumbs.db
 *.zip
 /tools/preview/
 /tools/admin/
+/tests/browser/fixtures/

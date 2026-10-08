@@ -31,6 +31,70 @@ class Renderer {
 	private static $assets_done = false;
 
 	/**
+	 * Zielbreite für Bilder, die über das ganze Raster laufen.
+	 */
+	const WIDE_IMAGE_WIDTH = 1800;
+
+	/**
+	 * Name der eigenen Bildgröße für Mosaik und Hintergrund.
+	 */
+	const WIDE_IMAGE_SIZE = 'adventskalender-wide';
+
+	/**
+	 * Meldet eine Bildgröße an, die zu Mosaik und Hintergrund passt.
+	 *
+	 * Gilt nur für künftige Uploads – für vorhandene Bilder sucht
+	 * image_url_for_width() die beste bereits erzeugte Größe.
+	 */
+	public static function register_image_size(): void {
+		add_image_size( self::WIDE_IMAGE_SIZE, self::WIDE_IMAGE_WIDTH, 0, false );
+	}
+
+	/**
+	 * Liefert die URL der kleinsten erzeugten Bildgröße, die mindestens
+	 * die gewünschte Breite hat.
+	 *
+	 * Mosaik- und Hintergrundbild liegen als CSS-Hintergrund vor, dort
+	 * greift kein srcset. Ohne diese Auswahl lieferte das Plugin die
+	 * Originaldatei aus – bei einem großen Foto mehrere Megabyte für ein
+	 * Raster, das selten breiter als 1200 px ist.
+	 *
+	 * @param int $attachment_id Anhang-ID.
+	 * @param int $target_width  Mindestbreite in Pixeln.
+	 */
+	public static function image_url_for_width( int $attachment_id, int $target_width ): string {
+		$attachment_id = Settings::sanitize_attachment_id( $attachment_id );
+		if ( $attachment_id <= 0 ) {
+			return '';
+		}
+
+		$meta       = wp_get_attachment_metadata( $attachment_id );
+		$best_name  = '';
+		$best_width = PHP_INT_MAX;
+
+		if ( is_array( $meta ) && ! empty( $meta['sizes'] ) && is_array( $meta['sizes'] ) ) {
+			foreach ( $meta['sizes'] as $name => $size ) {
+				$width = isset( $size['width'] ) ? (int) $size['width'] : 0;
+				if ( $width >= $target_width && $width < $best_width ) {
+					$best_width = $width;
+					$best_name  = (string) $name;
+				}
+			}
+		}
+
+		if ( '' !== $best_name ) {
+			$url = wp_get_attachment_image_url( $attachment_id, $best_name );
+			if ( $url ) {
+				return (string) $url;
+			}
+		}
+
+		// Keine passende Zwischengröße – das Original ist entweder kleiner
+		// als die Zielbreite oder es wurden keine Größen erzeugt.
+		return (string) wp_get_attachment_image_url( $attachment_id, 'full' );
+	}
+
+	/**
 	 * Registriert Styles und Skripte.
 	 */
 	public static function register_assets(): void {
@@ -62,9 +126,17 @@ class Renderer {
 		}
 		self::$assets_done = true;
 
+		/**
+		 * Filtert den Abfrageparameter für verlinkbare Türchen.
+		 *
+		 * @param string $parameter Parametername.
+		 */
+		$parameter = sanitize_key( (string) apply_filters( 'adventskalender_url_parameter', 'tuerchen' ) );
+
 		$data = array(
 			'restUrl' => esc_url_raw( rest_url( Rest::NAMESPACE_V1 . '/' ) ),
 			'nonce'   => is_user_logged_in() ? wp_create_nonce( 'wp_rest' ) : '',
+			'param'   => '' !== $parameter ? $parameter : 'tuerchen',
 			'i18n'    => array(
 				'loading'     => __( 'Türchen wird geöffnet …', 'adventskalender' ),
 				'error'       => __( 'Der Inhalt konnte nicht geladen werden. Bitte später erneut versuchen.', 'adventskalender' ),
@@ -256,7 +328,7 @@ class Renderer {
 		if ( 'mosaic' === $args['layout'] ) {
 			$mosaic_id = Settings::sanitize_attachment_id( $settings['mosaic_image'] );
 			if ( $mosaic_id > 0 ) {
-				$mosaic_url = (string) wp_get_attachment_image_url( $mosaic_id, 'full' );
+				$mosaic_url = self::image_url_for_width( $mosaic_id, self::WIDE_IMAGE_WIDTH );
 			}
 			if ( '' === $mosaic_url ) {
 				// Ohne Bild ist der Mosaik-Modus sinnlos – elegant zurückfallen.
@@ -267,7 +339,7 @@ class Renderer {
 		$background_url = '';
 		$background_id  = Settings::sanitize_attachment_id( $settings['background_image'] );
 		if ( $background_id > 0 ) {
-			$background_url = (string) wp_get_attachment_image_url( $background_id, 'full' );
+			$background_url = self::image_url_for_width( $background_id, self::WIDE_IMAGE_WIDTH );
 		}
 
 		$styles = array( '--ak-cols:' . $cols, '--ak-rows:' . max( 1, $rows ) );

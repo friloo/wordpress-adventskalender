@@ -48,4 +48,8 @@ if ( $broken ) {
 	printf( "Fehlerhafte Suiten: %s\n", implode( ', ', $broken ) );
 }
 
+printf(
+	"\nFrontend im Browser prüfen:  \033[1mnode tests/browser/run.js\033[0m\n"
+);
+
 exit( ( $failed > 0 || $broken ) ? 1 : 0 );

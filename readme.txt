@@ -31,6 +31,7 @@ Weitere Funktionen:
 * Sechs Farbwelten inklusive frei wählbarer Markenfarbe, optionaler Schneefall, optionales Hintergrundbild
 * Shortcode `[adventskalender]` und Block „Adventskalender"
 * Barrierefrei: Tastaturbedienung, Fokusführung, reduzierte Bewegung
+* Verlinkbare Türchen: ein geöffnetes Türchen steht in der Adresszeile, die Zurück-Taste schließt die Lightbox
 
 Sicherheit: Inhalte gesperrter Türchen werden nicht an den Browser ausgeliefert. Erst nach serverseitiger Datumsprüfung liefert eine eigene REST-Route den Inhalt.
 

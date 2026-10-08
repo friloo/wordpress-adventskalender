@@ -50,6 +50,7 @@ function get_option( $k, $d = false ) { return $GLOBALS['ak_options'][ $k ] ?? $
 function update_option( $k, $v ) { $GLOBALS['ak_options'][ $k ] = $v; return true; }
 function add_option( $k, $v ) { return update_option( $k, $v ); }
 function wp_parse_args( $args, $defaults = array() ) { return array_merge( $defaults, (array) $args ); }
+function sanitize_key( $k ) { return preg_replace( '/[^a-z0-9_\-]/', '', strtolower( (string) $k ) ); }
 function sanitize_text_field( $v ) { return trim( strip_tags( (string) $v ) ); }
 function wp_kses_post( $v ) { return (string) $v; }
 function esc_url_raw( $v ) { return (string) $v; }

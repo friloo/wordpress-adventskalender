@@ -56,6 +56,7 @@ class Plugin {
 		// Früh registrieren: der Block rendert serverseitig über die REST-API,
 		// wo "wp_enqueue_scripts" nie ausgelöst wird.
 		add_action( 'init', array( Renderer::class, 'register_assets' ), 5 );
+		add_action( 'after_setup_theme', array( Renderer::class, 'register_image_size' ) );
 		add_action( 'admin_init', array( Renderer::class, 'register_assets' ) );
 
 		// Cache der Türchen bei Änderungen leeren.
