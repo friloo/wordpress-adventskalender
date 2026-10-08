@@ -34,7 +34,11 @@
 	background: var(--ak-canvas);
 	color: var(--ak-canvas-text);
 	font-family: var(--ak-font);
-	container-type: inline-size;
+}
+
+/* Scroll-Sperre, solange die Lightbox offen ist. */
+html.ak-no-scroll {
+	overflow: hidden;
 }
 
 .ak-calendar *,
@@ -170,6 +174,10 @@
 
 /* ------------------------------------------------------------------ Raster */
 
+.ak-grid-wrap {
+	container-type: inline-size;
+}
+
 .ak-grid {
 	display: grid;
 	grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -220,6 +228,7 @@
 	font: inherit;
 	cursor: pointer;
 	perspective: 900px;
+	container-type: inline-size;
 	-webkit-tap-highlight-color: transparent;
 	transition: transform 220ms var(--ak-ease), box-shadow 220ms var(--ak-ease);
 }
@@ -278,7 +287,8 @@
 	display: -webkit-box;
 	overflow: hidden;
 	max-width: 100%;
-	font-size: clamp(.62rem, 1.1cqw + .4rem, .82rem);
+	font-size: .72rem; /* Rückfall ohne cq-Einheiten */
+	font-size: clamp(.6rem, 9cqw, .82rem);
 	font-weight: 500;
 	line-height: 1.3;
 	text-shadow: 0 1px 3px rgba(0, 0, 0, .7);
@@ -386,7 +396,8 @@
 	position: relative;
 	z-index: 2;
 	font-family: var(--ak-number-font);
-	font-size: clamp(1.4rem, 4.5cqw + .6rem, 2.6rem);
+	font-size: 2rem; /* Rückfall ohne cq-Einheiten */
+	font-size: clamp(1.15rem, 34cqw, 2.6rem);
 	font-weight: 600;
 	line-height: 1;
 	color: var(--ak-number);
@@ -407,15 +418,18 @@
 	backdrop-filter: blur(3px);
 	box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .28);
 	color: #fff;
-	font-size: clamp(1rem, 3cqw + .5rem, 1.7rem);
+	font-size: 1.3rem; /* Rückfall ohne cq-Einheiten */
+	font-size: clamp(.9rem, 22cqw, 1.65rem);
 }
 
 .ak-door__knob {
 	position: absolute;
 	top: 50%;
 	right: 8%;
-	width: clamp(5px, 1.6cqw, 9px);
-	height: clamp(5px, 1.6cqw, 9px);
+	width: 7px; /* Rückfall ohne cq-Einheiten */
+	height: 7px;
+	width: clamp(5px, 5cqw, 9px);
+	height: clamp(5px, 5cqw, 9px);
 	border-radius: 50%;
 	background: radial-gradient(circle at 32% 30%, #fff, var(--ak-accent) 58%, rgba(0, 0, 0, .45));
 	box-shadow: 0 1px 2px rgba(0, 0, 0, .4);
@@ -473,11 +487,6 @@
 .ak-door--locked:hover::after,
 .ak-door--locked:focus-visible::after {
 	background: rgba(10, 16, 22, .28);
-}
-
-.ak-door--locked .ak-door__front .ak-door__hint {
-	position: absolute;
-	z-index: 4;
 }
 
 .ak-door[data-preview-only="1"] .ak-door__front::after {

@@ -198,7 +198,11 @@ class Admin {
 			}
 		}
 
-		$today = (int) current_datetime()->format( 'n' ) === 12 ? (int) current_datetime()->format( 'j' ) : 0;
+		// „heute“ nur markieren, wenn das angezeigte Jahr auch das laufende ist.
+		$now   = current_datetime();
+		$today = ( (int) $now->format( 'Y' ) === $year && 12 === (int) $now->format( 'n' ) )
+			? (int) $now->format( 'j' )
+			: 0;
 		?>
 		<div class="wrap ak-admin">
 			<h1 class="ak-admin__title">

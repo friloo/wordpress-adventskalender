@@ -49,7 +49,11 @@ class Plugin {
 		add_action( 'init', array( $this, 'on_init' ) );
 		add_action( 'admin_init', array( Settings::class, 'register' ) );
 		add_action( 'rest_api_init', array( Rest::class, 'register_routes' ) );
-		add_action( 'wp_enqueue_scripts', array( Renderer::class, 'register_assets' ) );
+
+		// Früh registrieren: der Block rendert serverseitig über die REST-API,
+		// wo "wp_enqueue_scripts" nie ausgelöst wird.
+		add_action( 'init', array( Renderer::class, 'register_assets' ), 5 );
+		add_action( 'admin_init', array( Renderer::class, 'register_assets' ) );
 
 		// Cache der Türchen bei Änderungen leeren.
 		add_action( 'save_post_' . Doors::POST_TYPE, array( Doors::class, 'flush_cache' ) );

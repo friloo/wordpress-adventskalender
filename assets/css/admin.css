@@ -350,11 +350,6 @@
 	overflow: hidden;
 }
 
-.ak-radio-card__preview::before,
-.ak-radio-card__preview::after {
-	content: "";
-}
-
 .ak-radio-card__preview--classic {
 	background:
 		repeating-linear-gradient(90deg, #17492f 0 32%, transparent 32% 34%),

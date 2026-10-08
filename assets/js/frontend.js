@@ -425,7 +425,6 @@
 			this.contentEl.innerHTML = data.html || '';
 			this.contentEl.scrollTop = 0;
 			this.bindGalleryZoom( this.contentEl );
-			this.playFirstVideo( this.contentEl );
 		}
 	};
 
@@ -441,15 +440,8 @@
 		door.setAttribute( 'data-state', 'locked' );
 		door.setAttribute( 'aria-expanded', 'false' );
 		door.setAttribute( 'aria-disabled', 'true' );
+		door.classList.remove( 'ak-door--closed', 'ak-door--empty' );
 		door.classList.add( 'ak-door--locked' );
-	};
-
-	/**
-	 * Setzt den Fokus bei geladenen Videos nicht automatisch auf Autoplay,
-	 * sondern lädt nur das Vorschaubild (Rücksicht auf Datenvolumen).
-	 */
-	Calendar.prototype.playFirstVideo = function () {
-		/* Bewusst leer: kein Autoplay. */
 	};
 
 	/**

@@ -376,23 +376,39 @@ class Metabox {
 
 		$raw = wp_unslash( $_POST ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- Felder werden einzeln geprüft.
 
-		// Tag: 0 bedeutet „nicht gesetzt“.
-		$day = isset( $raw['ak_day'] ) ? absint( $raw['ak_day'] ) : 0;
-		if ( $day >= 1 && $day <= 31 ) {
-			update_post_meta( $post_id, Doors::META_DAY, $day );
-		} else {
-			delete_post_meta( $post_id, Doors::META_DAY );
+		// Nur Felder anfassen, die das Formular tatsächlich mitgeschickt hat.
+		// Sonst würden ausgeblendete Metaboxen (Ansicht anpassen) beim
+		// Speichern vorhandene Inhalte löschen.
+		$sent = static function ( $field ) use ( $raw ) {
+			return array_key_exists( $field, $raw );
+		};
+
+		if ( $sent( 'ak_day' ) ) {
+			$day = absint( $raw['ak_day'] );
+			if ( $day >= 1 && $day <= 31 ) {
+				update_post_meta( $post_id, Doors::META_DAY, $day );
+			} else {
+				delete_post_meta( $post_id, Doors::META_DAY );
+			}
 		}
 
-		$year = isset( $raw['ak_year'] ) ? absint( $raw['ak_year'] ) : 0;
-		if ( $year < 2000 || $year > 2100 ) {
-			$year = (int) Settings::get( 'year' );
+		if ( $sent( 'ak_year' ) ) {
+			$year = absint( $raw['ak_year'] );
+			if ( $year < 2000 || $year > 2100 ) {
+				$year = (int) Settings::get( 'year' );
+			}
+			update_post_meta( $post_id, Doors::META_YEAR, $year );
 		}
-		update_post_meta( $post_id, Doors::META_YEAR, $year );
 
-		update_post_meta( $post_id, Doors::META_MEDIA_TYPE, Doors::sanitize_media_type( $raw['ak_media_type'] ?? 'none' ) );
-		update_post_meta( $post_id, Doors::META_LAYOUT, Doors::sanitize_layout( $raw['ak_layout'] ?? 'media_top' ) );
-		update_post_meta( $post_id, Doors::META_VIDEO_SOURCE, Doors::sanitize_video_source( $raw['ak_video_source'] ?? 'embed' ) );
+		if ( $sent( 'ak_media_type' ) ) {
+			update_post_meta( $post_id, Doors::META_MEDIA_TYPE, Doors::sanitize_media_type( $raw['ak_media_type'] ) );
+		}
+		if ( $sent( 'ak_layout' ) ) {
+			update_post_meta( $post_id, Doors::META_LAYOUT, Doors::sanitize_layout( $raw['ak_layout'] ) );
+		}
+		if ( $sent( 'ak_video_source' ) ) {
+			update_post_meta( $post_id, Doors::META_VIDEO_SOURCE, Doors::sanitize_video_source( $raw['ak_video_source'] ) );
+		}
 
 		foreach ( array(
 			'ak_image'         => Doors::META_IMAGE,
@@ -401,7 +417,10 @@ class Metabox {
 			'ak_preview_image' => Doors::META_PREVIEW_IMAGE,
 			'ak_door_image'    => Doors::META_DOOR_IMAGE,
 		) as $field => $meta_key ) {
-			$attachment = Settings::sanitize_attachment_id( $raw[ $field ] ?? 0 );
+			if ( ! $sent( $field ) ) {
+				continue;
+			}
+			$attachment = Settings::sanitize_attachment_id( $raw[ $field ] );
 			if ( $attachment > 0 ) {
 				update_post_meta( $post_id, $meta_key, $attachment );
 			} else {
@@ -409,32 +428,38 @@ class Metabox {
 			}
 		}
 
-		$gallery = Doors::sanitize_id_list( $raw['ak_gallery'] ?? '' );
-		if ( '' !== $gallery ) {
-			update_post_meta( $post_id, Doors::META_GALLERY, $gallery );
-		} else {
-			delete_post_meta( $post_id, Doors::META_GALLERY );
+		if ( $sent( 'ak_gallery' ) ) {
+			$gallery = Doors::sanitize_id_list( $raw['ak_gallery'] );
+			if ( '' !== $gallery ) {
+				update_post_meta( $post_id, Doors::META_GALLERY, $gallery );
+			} else {
+				delete_post_meta( $post_id, Doors::META_GALLERY );
+			}
 		}
 
-		$video_url = isset( $raw['ak_video_url'] ) ? esc_url_raw( trim( (string) $raw['ak_video_url'] ) ) : '';
-		if ( '' !== $video_url && wp_http_validate_url( $video_url ) ) {
-			update_post_meta( $post_id, Doors::META_VIDEO_URL, $video_url );
-		} else {
-			delete_post_meta( $post_id, Doors::META_VIDEO_URL );
-		}
-
-		$link_url = isset( $raw['ak_link_url'] ) ? esc_url_raw( trim( (string) $raw['ak_link_url'] ) ) : '';
-		if ( '' !== $link_url && wp_http_validate_url( $link_url ) ) {
-			update_post_meta( $post_id, Doors::META_LINK_URL, $link_url );
-		} else {
-			delete_post_meta( $post_id, Doors::META_LINK_URL );
+		foreach ( array(
+			'ak_video_url' => Doors::META_VIDEO_URL,
+			'ak_link_url'  => Doors::META_LINK_URL,
+		) as $field => $meta_key ) {
+			if ( ! $sent( $field ) ) {
+				continue;
+			}
+			$url = esc_url_raw( trim( (string) $raw[ $field ] ) );
+			if ( '' !== $url && wp_http_validate_url( $url ) ) {
+				update_post_meta( $post_id, $meta_key, $url );
+			} else {
+				delete_post_meta( $post_id, $meta_key );
+			}
 		}
 
 		foreach ( array(
 			'ak_link_label'   => Doors::META_LINK_LABEL,
 			'ak_preview_text' => Doors::META_PREVIEW_TEXT,
 		) as $field => $meta_key ) {
-			$text = isset( $raw[ $field ] ) ? sanitize_text_field( (string) $raw[ $field ] ) : '';
+			if ( ! $sent( $field ) ) {
+				continue;
+			}
+			$text = sanitize_text_field( (string) $raw[ $field ] );
 			if ( '' !== $text ) {
 				update_post_meta( $post_id, $meta_key, $text );
 			} else {

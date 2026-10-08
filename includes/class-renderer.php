@@ -190,12 +190,15 @@ class Renderer {
 		}
 
 		// Eigener deterministischer Generator – verändert den globalen
-		// Zufallszustand von PHP nicht.
-		$state = abs( crc32( 'adventskalender|' . $year . '|' . $seed ) ) | 1;
-		$next  = static function () use ( &$state ): int {
-			$state = ( $state * 1103515245 + 12345 ) & 0x7FFFFFFF;
+		// Zufallszustand von PHP nicht. Bewusst ein Hash statt eines
+		// linearen Kongruenzgenerators: dessen niedrige Bits sind schwach,
+		// und genau die bräuchte der Modulo unten.
+		$base    = 'adventskalender|' . $year . '|' . $seed;
+		$counter = 0;
+		$next    = static function () use ( $base, &$counter ): int {
+			++$counter;
 
-			return $state;
+			return (int) hexdec( substr( md5( $base . '|' . $counter ), 0, 8 ) );
 		};
 
 		for ( $i = count( $days ) - 1; $i > 0; $i-- ) {
@@ -301,15 +304,17 @@ class Renderer {
 				<div class="ak-snow" aria-hidden="true"></div>
 			<?php endif; ?>
 
-			<ul class="ak-grid" role="list">
-				<?php
-				$position = 0;
-				foreach ( $order as $day ) {
-					echo self::render_door( (int) $day, $year, $doors[ (int) $day ] ?? null, $position, $cols, $rows, (string) $args['layout'], $mosaic_url ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- bereits escaped.
-					++$position;
-				}
-				?>
-			</ul>
+			<div class="ak-grid-wrap">
+				<ul class="ak-grid" role="list">
+					<?php
+					$position = 0;
+					foreach ( $order as $day ) {
+						echo self::render_door( (int) $day, $year, $doors[ (int) $day ] ?? null, $position, $cols, $rows, (string) $args['layout'], $mosaic_url ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- bereits escaped.
+						++$position;
+					}
+					?>
+				</ul>
+			</div>
 
 			<?php echo self::render_lightbox( $uid ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- bereits escaped. ?>
 
@@ -415,8 +420,9 @@ class Renderer {
 			'class'       => 'ak-door ak-door--' . $state,
 			'data-day'    => (string) $day,
 			'data-state'  => $state,
-			'aria-label'  => $label,
+			'aria-label'    => $label,
 			'aria-expanded' => 'false',
+			'aria-haspopup' => 'dialog',
 		);
 
 		if ( 'locked' === $state ) {

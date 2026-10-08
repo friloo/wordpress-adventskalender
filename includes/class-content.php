@@ -308,7 +308,10 @@ class Content {
 			$label = __( 'Mehr erfahren', 'adventskalender' );
 		}
 
-		$is_external = ! str_contains( $url, (string) wp_parse_url( home_url(), PHP_URL_HOST ) );
+		// Kompatibel mit PHP 7.4 – kein str_contains().
+		$host        = (string) wp_parse_url( home_url(), PHP_URL_HOST );
+		$url_host    = (string) wp_parse_url( $url, PHP_URL_HOST );
+		$is_external = '' !== $url_host && 0 !== strcasecmp( $url_host, $host );
 		$rel         = $is_external ? ' target="_blank" rel="noopener noreferrer"' : '';
 
 		return sprintf(

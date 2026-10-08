@@ -111,3 +111,22 @@ Den Testmodus kann man direkt auf der Übersichtsseite ein- und ausschalten.
 ## Lizenz
 
 GPL-2.0-or-later
+
+## Tests
+
+Die Logik lässt sich ohne WordPress-Installation prüfen – gegen schlanke
+Attrappen der benötigten WordPress-Funktionen:
+
+```bash
+php tests/run.php
+```
+
+Abgedeckt sind unter anderem:
+
+* Datumsgrenzen inklusive Mitternacht, Zeitzonen und Jahreswechsel
+* Testmodus und Redaktionsvorschau (auch abgeschaltet)
+* Validierung der Einstellungen und Shortcode-Attribute (Allowlists, Medien-IDs)
+* Stabilität und Streuung der zufälligen Anordnung
+* **Zusicherung, dass kein Inhalt eines gesperrten Türchens im HTML oder in
+  einer REST-Antwort auftaucht** – inklusive Umgehungsversuch über den
+  `year`-Parameter
