@@ -178,3 +178,74 @@ foreach ( $pages as $file => $cfg ) {
 	file_put_contents( $out_dir . '/' . $file, build_page( $cfg[0], $cfg[1], $cfg[2] ) );
 	echo "geschrieben: preview/$file\n";
 }
+
+// --- Eine Seite nur für das Bericht-Layout -------------------------------
+// Zeigt, wie Titelbild, Fließtext und Bilder im Text zusammenspielen.
+
+$bericht_text = <<<HTML
+<p>Es gibt Rezepte, die man nicht aufschreibt, weil sie ohnehin jeder kennt. Und es gibt dieses eine, das jedes Jahr am zweiten Advent aus einem zerfledderten Heft geholt wird – mit Mehlflecken auf Seite vier.</p>
+
+<figure class="wp-caption alignright" style="width: 300px"><img class="size-medium" src="IMG_A" width="300" height="200" alt="" /><figcaption class="wp-caption-text">Die Teigkugel muss eine Stunde kalt stehen. Keine Abkürzung.</figcaption></figure>
+
+<p>Der Teig ist in zehn Minuten fertig. Die Kunst liegt im Warten: eine Stunde im Kühlschrank, sonst klebt er an allem, nur nicht am Ausstecher.</p>
+
+<h3>Die Zutaten</h3>
+
+<ul>
+<li>200 g gemahlene Mandeln</li>
+<li>150 g Puderzucker, gesiebt</li>
+<li>2 Eiweiß, zimmerwarm</li>
+<li>1 TL Zimt – kein gehäufter</li>
+</ul>
+
+<figure class="wp-caption alignleft" style="width: 280px"><img class="size-medium" src="IMG_B" width="280" height="186" alt="" /><figcaption class="wp-caption-text">Ausstechen geht am besten zu zweit.</figcaption></figure>
+
+<p>Bei 150 Grad Umluft brauchen die Sterne zwölf Minuten, nicht länger. Sie sollen hell bleiben – wer auf Farbe wartet, hat sie schon zu lange drin.</p>
+
+<blockquote><p>Am besten schmecken sie am dritten Tag. Falls sie so lange durchhalten.</p></blockquote>
+
+<p>Die Glasur zum Schluss dünn aufstreichen und über Nacht trocknen lassen.</p>
+HTML;
+
+$bericht_text = str_replace(
+	array( 'IMG_A', 'IMG_B' ),
+	array( placeholder( 3, 600, 400 ), placeholder( 5, 560, 372 ) ),
+	$bericht_text
+);
+
+$bericht_post = new WP_Post(
+	array(
+		'ID'           => 900,
+		'post_title'   => 'Zimtsterne aus Omas Heft',
+		'post_content' => $bericht_text,
+	)
+);
+$GLOBALS['ak_meta'][900] = array(
+	'_ak_day'        => 2,
+	'_ak_year'       => 2026,
+	'_ak_media_type' => 'image',
+	'_ak_image'      => 2,
+	'_ak_layout'     => 'report',
+	'_ak_link_url'   => 'https://example.test/rezepte',
+	'_ak_link_label' => 'Alle Rezepte ansehen',
+);
+
+$bericht_page = '<!doctype html><html lang="de"><head><meta charset="utf-8">'
+	. '<meta name="viewport" content="width=device-width, initial-scale=1"><title>Bericht-Layout</title>'
+	. '<style>body{margin:0;background:#4a5560;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}</style>'
+	. '<style>' . $css . '</style></head><body>'
+	. '<div class="ak-calendar ak-calendar--theme-nordic" style="padding:0;background:none">'
+	. '<div class="ak-lightbox"><div class="ak-lightbox__backdrop"></div>'
+	. '<div class="ak-lightbox__dialog" role="dialog" aria-modal="true" tabindex="-1">'
+	. '<button type="button" class="ak-lightbox__close" aria-label="Schließen">'
+	. '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>'
+	. '<div class="ak-lightbox__header"><p class="ak-lightbox__day">Türchen 2</p>'
+	. '<h2 class="ak-lightbox__title">Zimtsterne aus Omas Heft</h2></div>'
+	. '<div class="ak-lightbox__content">' . Content::render( $bericht_post, 2 ) . '</div>'
+	. '<div class="ak-lightbox__footer">'
+	. '<button type="button" class="ak-lightbox__nav">&larr; Vorheriges</button>'
+	. '<button type="button" class="ak-lightbox__nav">Nächstes &rarr;</button>'
+	. '</div></div></div></div></body></html>';
+
+file_put_contents( $out_dir . '/30-bericht.html', $bericht_page );
+echo "geschrieben: preview/30-bericht.html\n";

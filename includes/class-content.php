@@ -41,7 +41,7 @@ class Content {
 	 * @return array<string,mixed>
 	 */
 	public static function payload( \WP_Post $post, int $day ): array {
-		$layout = Doors::sanitize_layout( self::meta( $post->ID, Doors::META_LAYOUT, 'media_top' ) );
+		$layout = Doors::sanitize_layout( self::meta( $post->ID, Doors::META_LAYOUT, Doors::DEFAULT_LAYOUT ) );
 
 		$payload = array(
 			'day'     => $day,
@@ -76,7 +76,13 @@ class Content {
 		$show_media = 'text_only' !== $layout && '' !== $data['media'];
 		$show_text  = 'media_only' !== $layout && ( '' !== $data['text'] || '' !== $data['link'] );
 
-		$html  = '<div class="' . esc_attr( (string) $data['classes'] ) . '">';
+		// Im Bericht ohne Titelbild soll der Text nicht in der Luft hängen.
+		$classes = (string) $data['classes'];
+		if ( 'report' === $layout && ! $show_media ) {
+			$classes .= ' is-without-lead';
+		}
+
+		$html  = '<div class="' . esc_attr( $classes ) . '">';
 		if ( $show_media ) {
 			$html .= '<div class="ak-lightbox__media">' . $data['media'] . '</div>';
 		}
@@ -107,10 +113,17 @@ class Content {
 		}
 
 		// Bewusst ohne „the_content“, um Rekursionen mit anderen Plugins zu vermeiden.
+		// Block-Inhalte bringen ihr eigenes Markup mit – wpautop würde dort
+		// zusätzliche Absätze zwischen die Blöcke setzen. WordPress selbst
+		// hängt wpautop bei Blockinhalten ebenfalls aus.
+		$has_blocks = function_exists( 'has_blocks' ) && has_blocks( $raw );
+
 		$html = do_blocks( $raw );
 		$html = wptexturize( $html );
 		$html = convert_smilies( $html );
-		$html = wpautop( $html );
+		if ( ! $has_blocks ) {
+			$html = wpautop( $html );
+		}
 		$html = shortcode_unautop( $html );
 		$html = do_shortcode( $html );
 		$html = wp_filter_content_tags( $html, 'adventskalender' );

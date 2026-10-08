@@ -634,9 +634,12 @@ html.ak-no-scroll {
 }
 
 .ak-lightbox__content {
+	--ak-lb-px: clamp(20px, 3vw, 36px);
+	--ak-lb-pt: clamp(16px, 2.4vw, 24px);
+
 	flex: 1 1 auto;
 	overflow-y: auto;
-	padding: clamp(16px, 2.4vw, 24px) clamp(20px, 3vw, 36px) clamp(20px, 3vw, 30px);
+	padding: var(--ak-lb-pt) var(--ak-lb-px) clamp(20px, 3vw, 30px);
 	overscroll-behavior: contain;
 	-webkit-overflow-scrolling: touch;
 }
@@ -658,6 +661,50 @@ html.ak-no-scroll {
 	.ak-lightbox__body--media_side {
 		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 	}
+}
+
+/* ------------------------------------------------- Bericht (Titelbild) */
+
+/* Das Titelbild läuft über die volle Breite der Lightbox – es bricht
+   dafür aus dem Innenabstand aus. */
+.ak-lightbox__body--report > .ak-lightbox__media {
+	margin: calc(-1 * var(--ak-lb-pt)) calc(-1 * var(--ak-lb-px)) clamp(18px, 2.6vw, 28px);
+}
+
+.ak-lightbox__body--report > .ak-lightbox__media .ak-media {
+	margin: 0;
+}
+
+.ak-lightbox__body--report > .ak-lightbox__media .ak-media__img {
+	/* Ein Band, kein halber Bildschirm: der Text soll ohne Scrollen
+	   anfangen. */
+	width: 100%;
+	max-width: none;
+	max-height: min(32vh, 300px);
+	margin: 0;
+	border-radius: 0;
+	object-fit: cover;
+}
+
+.ak-lightbox__body--report > .ak-lightbox__media .ak-embed,
+.ak-lightbox__body--report > .ak-lightbox__media .ak-media__video {
+	border-radius: 0;
+}
+
+.ak-lightbox__body--report > .ak-lightbox__media .ak-media__caption {
+	padding: 0 var(--ak-lb-px);
+}
+
+/* Angenehme Zeilenlänge für längere Texte. */
+.ak-lightbox__body--report .ak-prose {
+	max-width: 68ch;
+	margin-inline: auto;
+	font-size: 1.02rem;
+}
+
+.ak-lightbox__body--report .ak-cta {
+	max-width: 68ch;
+	margin-inline: auto;
 }
 
 .ak-lightbox__footer {
@@ -855,7 +902,191 @@ html.ak-no-scroll {
 	border-radius: 12px;
 }
 
-.ak-prose figure { margin: 1.2em 0; }
+.ak-prose figure {
+	margin: 1.4em 0;
+}
+
+/* Floats hinter sich aufräumen, damit der nächste Absatz sitzt. */
+.ak-prose::after {
+	content: "";
+	display: block;
+	clear: both;
+}
+
+/* --- Bilder im Fließtext: Ausrichtung wie im Editor gewählt ----------- */
+
+.ak-prose .alignleft,
+.ak-prose figure.alignleft,
+.ak-prose img.alignleft {
+	float: left;
+	max-width: min(48%, 300px);
+	margin: .35em 1.5em 1em 0;
+}
+
+.ak-prose .alignright,
+.ak-prose figure.alignright,
+.ak-prose img.alignright {
+	float: right;
+	max-width: min(48%, 300px);
+	margin: .35em 0 1em 1.5em;
+}
+
+.ak-prose .aligncenter,
+.ak-prose img.aligncenter {
+	display: block;
+	margin-inline: auto;
+	clear: both;
+}
+
+.ak-prose .alignwide,
+.ak-prose .alignfull {
+	clear: both;
+	width: auto;
+	max-width: none;
+	margin-inline: calc(-1 * clamp(8px, 2vw, 28px));
+}
+
+.ak-prose .alignfull img,
+.ak-prose .alignwide img {
+	width: 100%;
+}
+
+.ak-prose .alignleft img,
+.ak-prose .alignright img,
+.ak-prose .aligncenter img {
+	width: 100%;
+}
+
+@media (max-width: 520px) {
+	/* Auf dem Telefon ist Textumfluss unleserlich. */
+	.ak-prose .alignleft,
+	.ak-prose .alignright,
+	.ak-prose figure.alignleft,
+	.ak-prose figure.alignright,
+	.ak-prose img.alignleft,
+	.ak-prose img.alignright {
+		float: none;
+		max-width: 100%;
+		margin: 1.2em 0;
+	}
+}
+
+/* --- Bildunterschriften (klassischer Editor und Blöcke) --------------- */
+
+.ak-prose .wp-caption {
+	max-width: 100%;
+}
+
+.ak-prose .wp-caption img {
+	display: block;
+	width: 100%;
+}
+
+.ak-prose figcaption,
+.ak-prose .wp-caption-text,
+.ak-prose .wp-element-caption {
+	margin: .55em 0 0;
+	color: #6c7684;
+	font-size: .85rem;
+	line-height: 1.45;
+	text-align: left;
+}
+
+/* --- Blöcke des Block-Editors ---------------------------------------- */
+
+.ak-prose .wp-block-image {
+	margin: 1.4em 0;
+}
+
+.ak-prose .wp-block-image img {
+	display: block;
+}
+
+.ak-prose .wp-block-gallery,
+.ak-prose .blocks-gallery-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr));
+	gap: 12px;
+	margin: 1.4em 0;
+	padding: 0;
+	list-style: none;
+}
+
+.ak-prose .wp-block-gallery figure,
+.ak-prose .blocks-gallery-item {
+	margin: 0;
+}
+
+.ak-prose .wp-block-gallery img {
+	width: 100%;
+	height: 100%;
+	aspect-ratio: 4 / 3;
+	object-fit: cover;
+}
+
+.ak-prose .wp-block-columns {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+	gap: clamp(14px, 2.5vw, 26px);
+	margin: 1.4em 0;
+}
+
+.ak-prose .wp-block-column > :first-child { margin-top: 0; }
+.ak-prose .wp-block-column > :last-child  { margin-bottom: 0; }
+
+.ak-prose .wp-block-media-text {
+	display: grid;
+	gap: clamp(14px, 2.5vw, 26px);
+	align-items: center;
+	margin: 1.4em 0;
+}
+
+@media (min-width: 620px) {
+	.ak-prose .wp-block-media-text {
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+	}
+
+	.ak-prose .wp-block-media-text.has-media-on-the-right .wp-block-media-text__media {
+		order: 2;
+	}
+}
+
+.ak-prose .wp-block-media-text__media img {
+	width: 100%;
+}
+
+.ak-prose .wp-block-pullquote {
+	margin: 1.6em 0;
+	padding: 1.2em 0;
+	border-top: 2px solid var(--ak-accent, #c8a25a);
+	border-bottom: 2px solid var(--ak-accent, #c8a25a);
+	text-align: center;
+}
+
+.ak-prose .wp-block-pullquote p {
+	margin: 0;
+	font-family: var(--ak-number-font);
+	font-size: 1.2rem;
+	line-height: 1.4;
+}
+
+.ak-prose .wp-block-separator {
+	max-width: 7em;
+	margin: 1.8em auto;
+	border: 0;
+	border-top: 2px solid #e3e7eb;
+}
+
+.ak-prose .wp-block-button__link,
+.ak-prose .wp-element-button {
+	display: inline-block;
+	padding: .7em 1.4em;
+	border-radius: 999px;
+	background: #15202b;
+	color: #fff;
+	font-weight: 600;
+	text-decoration: none;
+}
 
 .ak-prose blockquote {
 	padding: .2em 0 .2em 1.1em;

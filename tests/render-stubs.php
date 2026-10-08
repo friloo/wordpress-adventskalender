@@ -52,10 +52,29 @@ function wp_oembed_get( $url, $args = array() ) { return '<iframe src="https://p
 function wp_http_validate_url( $url ) { return (bool) filter_var( $url, FILTER_VALIDATE_URL ); }
 function home_url() { return 'https://example.test'; }
 function wp_parse_url( $url, $component = -1 ) { return -1 === $component ? parse_url( $url ) : parse_url( $url, $component ); }
-function do_blocks( $c ) { return (string) $c; }
+function has_blocks( $c ) { return false !== strpos( (string) $c, '<!-- wp:' ); }
+function do_blocks( $c ) {
+	// Grobe Nachbildung: Blockkommentare entfernen, Markup behalten.
+	return trim( (string) preg_replace( '#<!--\s*/?wp:.*?-->#s', '', (string) $c ) );
+}
 function wptexturize( $c ) { return (string) $c; }
 function convert_smilies( $c ) { return (string) $c; }
-function wpautop( $c ) { return '<p>' . (string) $c . '</p>'; }
+function wpautop( $c, $br = true ) {
+	// Nähert WordPress an: Absätze an Leerzeilen, vorhandenes Blockmarkup
+	// bleibt unangetastet. Reicht, um die Wirkung im Test zu prüfen.
+	$out = '';
+	foreach ( preg_split( "/\n\s*\n/", trim( (string) $c ) ) as $part ) {
+		$part = trim( $part );
+		if ( '' === $part ) {
+			continue;
+		}
+		$out .= preg_match( '#^<(p|figure|div|ul|ol|h[1-6]|blockquote|table|pre|hr|img)\b#i', $part )
+			? $part . "\n"
+			: '<p>' . $part . "</p>\n";
+	}
+
+	return $out;
+}
 function shortcode_unautop( $c ) { return (string) $c; }
 function do_shortcode( $c ) { return (string) $c; }
 function wp_filter_content_tags( $c, $ctx = '' ) { return (string) $c; }

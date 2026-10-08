@@ -41,12 +41,18 @@ class Doors {
 	const META_LINK_LABEL    = '_ak_link_label';
 
 	/**
+	 * Voreingestellte Anordnung in der Lightbox.
+	 */
+	const DEFAULT_LAYOUT = 'report';
+
+	/**
 	 * Inhalts-Layouts innerhalb der Lightbox.
 	 *
 	 * @return array<string,string>
 	 */
 	public static function layouts(): array {
 		return array(
+			'report'     => __( 'Bericht – Titelbild über die volle Breite, darunter der Text', 'adventskalender' ),
 			'media_top'  => __( 'Medium oben, Text darunter', 'adventskalender' ),
 			'media_side' => __( 'Medium links, Text rechts', 'adventskalender' ),
 			'media_only' => __( 'Nur Medium (ohne Text)', 'adventskalender' ),
@@ -62,7 +68,7 @@ class Doors {
 	public static function media_types(): array {
 		return array(
 			'none'    => __( 'Kein Medium', 'adventskalender' ),
-			'image'   => __( 'Bild', 'adventskalender' ),
+			'image'   => __( 'Titelbild', 'adventskalender' ),
 			'gallery' => __( 'Bildergalerie', 'adventskalender' ),
 			'video'   => __( 'Video', 'adventskalender' ),
 		);
@@ -170,7 +176,7 @@ class Doors {
 	public static function sanitize_layout( $value ): string {
 		$value = is_string( $value ) ? $value : '';
 
-		return array_key_exists( $value, self::layouts() ) ? $value : 'media_top';
+		return array_key_exists( $value, self::layouts() ) ? $value : self::DEFAULT_LAYOUT;
 	}
 
 	/**

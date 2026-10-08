@@ -521,7 +521,7 @@ class Admin {
 
 			update_post_meta( $post_id, Doors::META_DAY, $day );
 			update_post_meta( $post_id, Doors::META_YEAR, $year );
-			update_post_meta( $post_id, Doors::META_LAYOUT, 'media_top' );
+			update_post_meta( $post_id, Doors::META_LAYOUT, Doors::DEFAULT_LAYOUT );
 			update_post_meta( $post_id, Doors::META_MEDIA_TYPE, 'none' );
 			++$created;
 		}

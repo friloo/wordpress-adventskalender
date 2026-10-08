@@ -56,7 +56,8 @@ class Metabox {
 		}
 
 		echo '<p class="ak-editor-hint">'
-			. esc_html__( 'Der Inhalt aus dem Editor erscheint als Text in der Lightbox – inklusive eingefügter Bilder. Medien, Vorschau und Zeitfenster stellst du rechts bzw. unten ein.', 'adventskalender' )
+			. '<strong>' . esc_html__( 'Hier schreibst du den Bericht.', 'adventskalender' ) . '</strong> '
+			. esc_html__( 'Weitere Bilder fügst du mit „Dateien hinzufügen“ direkt in den Text ein – sie lassen sich links oder rechts umfließen und mit einer Bildunterschrift versehen. Das Titelbild, die Vorschau und das Zeitfenster stellst du rechts bzw. unten ein.', 'adventskalender' )
 			. '</p>';
 	}
 
@@ -190,7 +191,7 @@ class Metabox {
 	 */
 	public static function render_media( \WP_Post $post ): void {
 		$media_type = Doors::sanitize_media_type( self::value( $post->ID, Doors::META_MEDIA_TYPE, 'none' ) );
-		$layout     = Doors::sanitize_layout( self::value( $post->ID, Doors::META_LAYOUT, 'media_top' ) );
+		$layout     = Doors::sanitize_layout( self::value( $post->ID, Doors::META_LAYOUT, Doors::DEFAULT_LAYOUT ) );
 		$source     = Doors::sanitize_video_source( self::value( $post->ID, Doors::META_VIDEO_SOURCE, 'embed' ) );
 		?>
 		<div class="ak-fields" data-ak-fields>
@@ -207,8 +208,11 @@ class Metabox {
 			</div>
 
 			<div class="ak-field" data-ak-when="image">
-				<label class="ak-field__label"><?php esc_html_e( 'Bild', 'adventskalender' ); ?></label>
+				<span class="ak-field__label"><?php esc_html_e( 'Titelbild', 'adventskalender' ); ?></span>
 				<?php Admin::media_field( 'ak_image', (int) self::value( $post->ID, Doors::META_IMAGE, 0 ) ); ?>
+				<p class="description">
+					<?php esc_html_e( 'Steht im Layout „Bericht“ über die volle Breite oben. Weitere Bilder gehören direkt in den Text oben.', 'adventskalender' ); ?>
+				</p>
 			</div>
 
 			<div class="ak-field" data-ak-when="gallery">
@@ -251,6 +255,9 @@ class Metabox {
 						<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $key, $layout ); ?>><?php echo esc_html( $label ); ?></option>
 					<?php endforeach; ?>
 				</select>
+				<p class="description">
+					<?php esc_html_e( '„Bericht“ ist die Voreinstellung: Titelbild randlos oben, darunter der Text in angenehmer Zeilenlänge.', 'adventskalender' ); ?>
+				</p>
 			</div>
 
 			<div class="ak-field ak-field--split">

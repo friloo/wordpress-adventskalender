@@ -14,7 +14,7 @@ Ein eleganter, barrierefreier Adventskalender: zufällig angeordnete Türchen, 3
 
 24 Türchen (oder bis zu 31), zufällig – aber über das Jahr stabil – angeordnet. Jedes Türchen öffnet sich mit einer 3D-Animation, zeigt dahinter eine kleine Vorschau und präsentiert den Inhalt in einer weißen Lightbox.
 
-Inhalte pro Türchen: Text, Bild, Bildergalerie, Video (YouTube, Vimeo, Mediathek, MP4) oder Text mit Bildern – mit wählbarer Anordnung.
+Inhalte pro Türchen: Text, Bild, Bildergalerie, Video (YouTube, Vimeo, Mediathek, MP4) oder ein kleiner Bericht – Titelbild randlos oben, darunter der Text, mit weiteren Bildern im Fließtext, links oder rechts umflossen und mit Bildunterschrift. Auf schmalen Bildschirmen steht jedes Bild automatisch allein.
 
 Farbwelt „Markenfarbe": Trage den Hex-Wert deiner Firmenfarbe ein – Türchen, Fläche, Zahlen, Akzente und Innenraum werden daraus abgeleitet. Alle Kontraste werden nach WCAG 2.1 berechnet und notfalls korrigiert, die Tagesnummern kippen automatisch zwischen hell und dunkel. Die Einstellungsseite zeigt eine Live-Vorschau mit den gemessenen Kontrastwerten.
 

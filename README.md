@@ -9,6 +9,9 @@ oder Text mit Bildern.
 
 * **Türchen öffnen sich wie echte Türchen** – 3D-Klappe mit Scharnier, dahinter eine kleine Vorschau.
 * **Weiße Lightbox** mit Titel, Medium, Text, optionalem Button und Blättern zum nächsten Türchen.
+* **Bericht-Layout** (Voreinstellung): Titelbild randlos oben, darunter der Text
+  in angenehmer Zeilenlänge – mit Bildern im Fließtext, links oder rechts
+  umflossen, samt Bildunterschriften.
 * **Drei Layouts** für die geschlossenen Türchen:
   * `classic` – elegante Türchen mit großer Zahl, ohne jedes Bild sofort schön
   * `mosaic` – **ein** großes Bild, jedes Türchen zeigt seinen Ausschnitt
@@ -98,6 +101,33 @@ Per Shortcode geht es auch ohne Umweg über die Einstellungen:
 
 Mit `scheme` wählst du zwischen heller und dunkler Kalenderfläche.
 
+## Ein Türchen als kleiner Bericht
+
+Das ist die Voreinstellung und der häufigste Fall: ein Titelbild, darunter
+ein Text, und im Text weitere Bilder.
+
+1. **Titelbild**: im Kasten „Inhalt des Türchens“ das Medium *Titelbild*
+   wählen und ein Bild setzen. Es läuft in der Lightbox randlos über die
+   volle Breite.
+2. **Text**: im Editor schreiben.
+3. **Weitere Bilder**: mit „Dateien hinzufügen“ direkt in den Text einfügen.
+   Die im Editor gewählte Ausrichtung wird übernommen:
+
+   | Ausrichtung | Wirkung in der Lightbox |
+   |-------------|--------------------------|
+   | links / rechts | Bild wird vom Text umflossen, max. 300 px breit |
+   | zentriert   | Bild steht allein, mittig |
+   | keine / breit | Bild über die Textbreite |
+
+   Bildunterschriften werden mitgenommen. Auf schmalen Bildschirmen steht
+   jedes Bild automatisch allein – Textumfluss ist dort unleserlich.
+4. **Anordnung** steht auf *Bericht*; andere Varianten (Medium links,
+   nur Text, nur Medium) lassen sich im selben Kasten wählen.
+
+Sowohl der klassische Editor als auch Block-Inhalte werden unterstützt –
+Bild-, Galerie-, Spalten-, Medien-und-Text-, Zitat- und Button-Blöcke sind
+gestaltet.
+
 ## Türchen pflegen
 
 Jedes Türchen ist ein eigener Inhaltstyp mit:
@@ -105,8 +135,9 @@ Jedes Türchen ist ein eigener Inhaltstyp mit:
 * **Titel** – Überschrift in der Lightbox
 * **Editor-Inhalt** – Text, auch mit eingefügten Bildern
 * **Zeitfenster** – Tag im Dezember + Kalenderjahr (bestimmt die Freischaltung)
-* **Medium** – kein Medium, Bild, Galerie oder Video (YouTube/Vimeo/Mediathek/MP4)
-* **Anordnung** – Medium oben, Medium links, nur Medium, nur Text
+* **Medium** – kein Medium, Titelbild, Galerie oder Video (YouTube/Vimeo/Mediathek/MP4)
+* **Anordnung** – Bericht (Titelbild randlos oben), Medium oben, Medium links,
+  nur Medium, nur Text
 * **Vorschau** – Bild und Teaser, die direkt hinter dem Türchen erscheinen
 * **Türchen-Motiv** – Bild des geschlossenen Türchens (Layout „Einzelbilder")
 * **Button** – optionaler Link mit eigenem Text

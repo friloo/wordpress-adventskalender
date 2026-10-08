@@ -135,6 +135,58 @@ check( 'ungültiges Layout verworfen', false !== strpos( $evil, 'ak-calendar--cl
 check( 'ungültiges Theme verworfen', false === strpos( $evil, 'nordic&quot;' ) && false !== strpos( $evil, 'ak-calendar--theme-elegant' ) );
 check( 'Spalten auf Einstellung zurück', false !== strpos( $evil, '--ak-cols:6' ) );
 
+echo "\n== Bericht-Layout (Titelbild, Text, Bilder im Text) ==\n";
+check( 'Bericht ist Voreinstellung', 'report' === \Adventskalender\Doors::DEFAULT_LAYOUT );
+check( 'unbekanntes Layout -> Bericht', 'report' === \Adventskalender\Doors::sanitize_layout( 'quatsch' ) );
+
+$GLOBALS['ak_meta'][101]['_ak_layout'] = 'report';
+$GLOBALS['ak_meta'][101]['_ak_media_type'] = 'image';
+$GLOBALS['ak_meta'][101]['_ak_image'] = 11;
+$GLOBALS['ak_doors'][1]->post_content = 'Ein kurzer Bericht über den ersten Dezember.';
+$bericht = Content::render( $GLOBALS['ak_doors'][1], 1 );
+check( 'Bericht-Klasse gesetzt', false !== strpos( $bericht, 'ak-lightbox__body--report' ) );
+check( 'Titelbild vor dem Text', strpos( $bericht, 'ak-lightbox__media' ) < strpos( $bericht, 'ak-lightbox__text' ) );
+check( 'kein is-without-lead mit Titelbild', false === strpos( $bericht, 'is-without-lead' ) );
+
+$GLOBALS['ak_meta'][101]['_ak_media_type'] = 'none';
+$ohne_bild = Content::render( $GLOBALS['ak_doors'][1], 1 );
+check( 'Bericht ohne Titelbild markiert', false !== strpos( $ohne_bild, 'is-without-lead' ) );
+check( 'Text trotzdem vorhanden', false !== strpos( $ohne_bild, 'ak-lightbox__text' ) );
+$GLOBALS['ak_meta'][101]['_ak_media_type'] = 'image';
+
+echo "\n== Bilder im Fließtext ==\n";
+$GLOBALS['ak_doors'][1]->post_content =
+	'<p>Erster Absatz.</p>'
+	. '<figure id="attachment_21" class="wp-caption alignright" style="width: 300px">'
+	. '<img class="size-medium wp-image-21" src="https://example.test/bild.jpg" width="300" height="200" />'
+	. '<figcaption class="wp-caption-text">Eine Bildunterschrift</figcaption></figure>'
+	. '<p>Zweiter Absatz, der das Bild umfließt.</p>';
+$mit_bildern = Content::render( $GLOBALS['ak_doors'][1], 1 );
+check( 'Ausrichtungsklasse bleibt erhalten', false !== strpos( $mit_bildern, 'alignright' ) );
+check( 'Bildunterschrift bleibt erhalten', false !== strpos( $mit_bildern, 'Eine Bildunterschrift' ) );
+check( 'figure bleibt erhalten', false !== strpos( $mit_bildern, '<figure' ) );
+check( 'Absätze bleiben erhalten', 2 === substr_count( $mit_bildern, '<p>' ) );
+
+echo "\n== Block-Inhalte werden nicht zerlegt ==\n";
+$GLOBALS['ak_doors'][1]->post_content =
+	"<!-- wp:paragraph -->\n<p>Ein Absatz aus dem Block-Editor.</p>\n<!-- /wp:paragraph -->\n\n"
+	. "<!-- wp:image {\"align\":\"left\"} -->\n"
+	. '<figure class="wp-block-image alignleft"><img src="https://example.test/b.jpg" alt=""/>'
+	. "<figcaption class=\"wp-element-caption\">Unterschrift</figcaption></figure>\n<!-- /wp:image -->";
+$blocks = Content::render( $GLOBALS['ak_doors'][1], 1 );
+check( 'Blockkommentare entfernt', false === strpos( $blocks, '<!-- wp:' ) );
+check( 'Blockmarkup erhalten', false !== strpos( $blocks, 'wp-block-image alignleft' ) );
+check( 'kein wpautop um Blöcke', false === strpos( $blocks, '<p><figure' ) && false === strpos( $blocks, '<p></p>' ) );
+check( 'Blockunterschrift erhalten', false !== strpos( $blocks, 'wp-element-caption' ) );
+
+// Klassischer Inhalt bekommt weiterhin Absätze.
+$GLOBALS['ak_doors'][1]->post_content = "Zeile eins.\n\nZeile zwei.";
+$klassisch = Content::render( $GLOBALS['ak_doors'][1], 1 );
+check( 'klassischer Text bekommt Absätze', false !== strpos( $klassisch, '<p>' ) );
+
+$GLOBALS['ak_doors'][1]->post_content = 'Fließtext für Tag 1.';
+$GLOBALS['ak_meta'][101]['_ak_layout'] = 'media_top';
+
 echo "\n== Farbwelt „Markenfarbe“ ==\n";
 update_option( Settings::OPTION, array_merge( Settings::get(), array(
 	'theme' => 'brand', 'brand_color' => '#0057b8', 'brand_scheme' => 'light',
