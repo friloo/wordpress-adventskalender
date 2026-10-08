@@ -25,6 +25,7 @@
 	--ak-accent: #c8a25a;
 	--ak-inside: #11261d;
 	--ak-inside-text: #f3f6f4;
+	--ak-door-back: linear-gradient(155deg, #cfc7b8, #ada498);
 
 	position: relative;
 	box-sizing: border-box;
@@ -58,6 +59,7 @@ html.ak-no-scroll {
 }
 
 .ak-calendar--theme-elegant {
+	--ak-door-back: linear-gradient(155deg, #3a4252, #262d3b);
 	--ak-canvas: linear-gradient(180deg, #11182b 0%, #0a0f1d 100%);
 	--ak-canvas-text: #e8ecf6;
 	--ak-door-face: linear-gradient(155deg, #1d2944 0%, #141d33 58%, #0d1424 100%);
@@ -68,6 +70,7 @@ html.ak-no-scroll {
 }
 
 .ak-calendar--theme-warm {
+	--ak-door-back: linear-gradient(155deg, #e3cdb4, #c9ae91);
 	--ak-canvas: linear-gradient(180deg, #fdf6ec 0%, #f6e7d4 100%);
 	--ak-canvas-text: #3b2317;
 	--ak-door-face: linear-gradient(155deg, #a8322c 0%, #8a241f 58%, #6d1a16 100%);
@@ -77,6 +80,7 @@ html.ak-no-scroll {
 }
 
 .ak-calendar--theme-modern {
+	--ak-door-back: linear-gradient(155deg, #55646b, #3b474c);
 	--ak-canvas: linear-gradient(180deg, #f6f7f8 0%, #e9edef 100%);
 	--ak-canvas-text: #1b2227;
 	--ak-door-face: linear-gradient(155deg, #37474f 0%, #263238 58%, #1a2327 100%);
@@ -86,6 +90,7 @@ html.ak-no-scroll {
 }
 
 .ak-calendar--theme-candy {
+	--ak-door-back: linear-gradient(155deg, #fdf3f8, #e6def2);
 	--ak-canvas: linear-gradient(180deg, #fff6fb 0%, #f1f3ff 100%);
 	--ak-canvas-text: #3c3350;
 	--ak-door-face: linear-gradient(155deg, #f3b8d2 0%, #d9b3ef 55%, #b9c3f5 100%);
@@ -93,6 +98,16 @@ html.ak-no-scroll {
 	--ak-number: #42305a;
 	--ak-accent: #8a6ddb;
 	--ak-inside: #4a3a63;
+}
+
+/*
+ * Markenfarbwelt: sämtliche Farbvariablen liefert der Server inline,
+ * abgeleitet aus der eingestellten Firmenfarbe (siehe class-color.php).
+ * Hier bleiben nur die Werte, die nicht von der Farbe abhängen.
+ */
+.ak-calendar--theme-brand[data-scheme="dark"] {
+	--ak-shadow-door: 0 2px 4px rgba(0, 0, 0, .38), 0 10px 26px -8px rgba(0, 0, 0, .55);
+	--ak-shadow-open: 0 18px 46px -16px rgba(0, 0, 0, .7);
 }
 
 /* -------------------------------------------------------- Hintergrundbild */
@@ -386,7 +401,7 @@ html.ak-no-scroll {
 }
 
 .ak-door__back {
-	background: linear-gradient(155deg, #d9d2c4, #bdb5a6);
+	background: var(--ak-door-back);
 	box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .12);
 	transform: rotateY(180deg);
 }
@@ -438,7 +453,7 @@ html.ak-no-scroll {
 	width: clamp(5px, 5cqw, 9px);
 	height: clamp(5px, 5cqw, 9px);
 	border-radius: 50%;
-	background: radial-gradient(circle at 32% 30%, #fff, var(--ak-accent) 58%, rgba(0, 0, 0, .45));
+	background: radial-gradient(circle at 32% 30%, #fff, var(--ak-knob, var(--ak-accent)) 58%, rgba(0, 0, 0, .45));
 	box-shadow: 0 1px 2px rgba(0, 0, 0, .4);
 	transform: translateY(-50%);
 	opacity: .95;
@@ -448,15 +463,15 @@ html.ak-no-scroll {
 
 .ak-door.is-open .ak-door__flap {
 	transform: rotateY(-108deg);
+	/* Die geöffnete Klappe ragt über das linke Nachbartürchen. Ohne das
+	   hier würde sie dort die Klicks abfangen. */
+	pointer-events: none;
 }
 
-/* Kein filter/opacity auf der Klappe: beides erzwingt
-   transform-style: flat und hebt backface-visibility auf –
-   dann zeigt die geöffnete Klappe ihre gespiegelte Vorderseite.
-   Die Abdunklung sitzt deshalb auf der Rückseite selbst. */
-.ak-door.is-open .ak-door__back {
-	background: linear-gradient(155deg, #cfc7b8, #ada498);
-}
+/* Hinweis: kein filter/opacity auf der Klappe – beides erzwingt
+   transform-style: flat und hebt backface-visibility auf; die geöffnete
+   Klappe zeigte dann ihre gespiegelte Vorderseite. Die Rückseite bringt
+   ihre eigene, gedämpfte Farbe mit (--ak-door-back). */
 
 .ak-door.is-open {
 	box-shadow: var(--ak-shadow-open);

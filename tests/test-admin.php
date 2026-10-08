@@ -142,6 +142,31 @@ check( 'alle Farbwelten wählbar', 5 === substr_count( $r['html'], '<option valu
 check( 'Settings-API-Gruppe gesetzt', false !== strpos( $r['html'], 'adventskalender_settings_group' ) );
 check( 'Testmodus-Warnung vorhanden', false !== strpos( $r['html'], 'Nur zum Testen verwenden' ) );
 
+echo "\n== Markenfarbe in den Einstellungen ==\n";
+update_option( Settings::OPTION, array_merge( Settings::get(), array(
+	'theme' => 'brand', 'brand_color' => '#0057b8', 'brand_scheme' => 'light',
+) ) );
+$r = render( array( Admin::class, 'render_settings' ) );
+check( 'rendert ohne Fatal', '' === $r['fatal'], $r['fatal'] );
+check( 'gültiges HTML', empty( parse_errors( $r['html'] ) ), implode( ' | ', parse_errors( $r['html'] ) ) );
+check( 'Farbfeld vorhanden', false !== strpos( $r['html'], 'name="adventskalender_settings[brand_color]"' ) );
+check( 'aktueller Wert gesetzt', false !== strpos( $r['html'], 'value="#0057b8"' ) );
+check( 'Helligkeitsschema wählbar', 2 === substr_count( $r['html'], '<option value="light"' ) + substr_count( $r['html'], '<option value="dark"' ) );
+check( 'Vorschau vorhanden', false !== strpos( $r['html'], 'data-ak-brand-preview' ) );
+check( 'Vorschau nutzt echte Klassen', false !== strpos( $r['html'], 'ak-calendar--theme-brand' ) );
+check( 'Palette inline gesetzt', false !== strpos( $r['html'], '--ak-door-face:linear-gradient(' ) );
+check( 'Farbmuster gelistet', 6 === substr_count( $r['html'], 'ak-brand-swatches__chip' ) );
+check( 'Kontrastliste gelistet', 5 === substr_count( $r['html'], 'ak-brand-contrast__ratio' ) );
+check( 'alle Kontraste bestehen', 5 === substr_count( $r['html'], 'class="is-ok"' ) );
+check( 'Markenfelder sind markiert', 3 === substr_count( $r['html'], 'data-ak-when-theme="brand"' ) );
+
+// Auch eine schwierige Farbe darf keine Warnung produzieren.
+update_option( Settings::OPTION, array_merge( Settings::get(), array( 'brand_color' => '#ffe000' ) ) );
+$r = render( array( Admin::class, 'render_settings' ) );
+check( 'knalliges Gelb: ohne Fatal', '' === $r['fatal'], $r['fatal'] );
+check( 'knalliges Gelb: alle Kontraste bestehen', 5 === substr_count( $r['html'], 'class="is-ok"' ) );
+update_option( Settings::OPTION, array_merge( Settings::get(), array( 'theme' => 'nordic', 'brand_color' => '#1f5f46' ) ) );
+
 echo "\n== Metaboxen ==\n";
 $post = $GLOBALS['ak_doors'][1];
 foreach ( array( 'render_schedule' => 'Zeitfenster', 'render_media' => 'Inhalt', 'render_preview' => 'Vorschau' ) as $method => $label ) {

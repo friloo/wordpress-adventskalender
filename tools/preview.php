@@ -145,6 +145,30 @@ $pages = array(
 	'06-hintergrund.html' => array( 'Hintergrundbild · Elegant',        array( 'year' => 2026, 'layout' => 'classic', 'theme' => 'elegant', 'columns' => 6, 'background_image' => 4, 'shuffle_seed' => 4242, 'snow' => 1, 'heading' => 'Adventskalender 2026' ), '2026-12-10 10:00:00' ),
 );
 
+// Farbwelt „Markenfarbe“ mit typischen Firmenfarben.
+$brands = array(
+	'10-marke-blau.html'  => array( 'Markenfarbe #0057B8 · hell',  '#0057b8', 'light' ),
+	'11-marke-rot.html'   => array( 'Markenfarbe #C8102E · hell',  '#c8102e', 'light' ),
+	'12-marke-gelb.html'  => array( 'Markenfarbe #FFB81C · hell',  '#ffb81c', 'light' ),
+	'13-marke-tuerkis.html' => array( 'Markenfarbe #00A19A · hell', '#00a19a', 'light' ),
+	'14-marke-dunkel.html' => array( 'Markenfarbe #0057B8 · dunkel', '#0057b8', 'dark' ),
+	'15-marke-limette.html' => array( 'Markenfarbe #8DC63F · dunkel', '#8dc63f', 'dark' ),
+);
+
+foreach ( $brands as $file => $cfg ) {
+	$pages[ $file ] = array(
+		$cfg[0],
+		array(
+			'year' => 2026, 'layout' => 'classic', 'theme' => 'brand',
+			'brand_color' => $cfg[1], 'brand_scheme' => $cfg[2],
+			'columns' => 6, 'shuffle_seed' => 4242,
+			'heading' => 'Unser Adventskalender',
+			'intro'   => 'Jeden Tag ein kleines Stück Vorfreude.',
+		),
+		'2026-12-14 10:00:00',
+	);
+}
+
 $out_dir = __DIR__ . '/preview';
 if ( ! is_dir( $out_dir ) ) {
 	mkdir( $out_dir, 0777, true );

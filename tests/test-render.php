@@ -135,6 +135,44 @@ check( 'ungültiges Layout verworfen', false !== strpos( $evil, 'ak-calendar--cl
 check( 'ungültiges Theme verworfen', false === strpos( $evil, 'nordic&quot;' ) && false !== strpos( $evil, 'ak-calendar--theme-elegant' ) );
 check( 'Spalten auf Einstellung zurück', false !== strpos( $evil, '--ak-cols:6' ) );
 
+echo "\n== Farbwelt „Markenfarbe“ ==\n";
+update_option( Settings::OPTION, array_merge( Settings::get(), array(
+	'theme' => 'brand', 'brand_color' => '#0057b8', 'brand_scheme' => 'light',
+) ) );
+$brand = Renderer::shortcode( array() );
+check( 'Theme-Klasse gesetzt', false !== strpos( $brand, 'ak-calendar--theme-brand' ) );
+check( 'Schema als Datenattribut', false !== strpos( $brand, 'data-scheme="light"' ) );
+check( 'Markenfarbe als Variable', false !== strpos( $brand, '--ak-brand:#0057b8' ) );
+check( 'Türchenverlauf abgeleitet', false !== strpos( $brand, '--ak-door-face:linear-gradient(' ) );
+check( 'Zahlfarbe abgeleitet', false !== strpos( $brand, '--ak-number:#' ) );
+check( 'Rückseite abgeleitet', false !== strpos( $brand, '--ak-door-back:linear-gradient(' ) );
+
+$dom_brand = new DOMDocument();
+libxml_use_internal_errors( true );
+$dom_brand->loadHTML( '<!doctype html><html><body>' . $brand . '</body></html>' );
+$brand_errors = array_filter( libxml_get_errors(), function ( $e ) {
+	if ( $e->level < LIBXML_ERR_ERROR ) { return false; }
+	return ! preg_match( '/Tag (svg|rect|path) invalid/', $e->message );
+} );
+libxml_clear_errors();
+check( 'HTML bleibt gültig', empty( $brand_errors ), count( $brand_errors ) . ' Fehler' );
+
+// Der Shortcode darf die Farbwelt aktivieren – aber nur mit gültigem Hex.
+update_option( Settings::OPTION, array_merge( Settings::get(), array( 'theme' => 'nordic' ) ) );
+$inline = Renderer::shortcode( array( 'color' => '#c8102e' ) );
+check( 'color-Attribut aktiviert die Markenwelt', false !== strpos( $inline, 'ak-calendar--theme-brand' ) );
+check( 'color-Attribut wird übernommen', false !== strpos( $inline, '--ak-brand:#c8102e' ) );
+
+$evil_color = Renderer::shortcode( array( 'color' => 'red;}</style><script>alert(1)</script>' ) );
+check( 'Farbinjektion abgewehrt', false === strpos( $evil_color, '<script' ) && false === strpos( $evil_color, '</style>' ) );
+check( 'ungültige Farbe -> Einstellung', false !== strpos( $evil_color, '--ak-brand:#' ) );
+
+$dark_brand = Renderer::shortcode( array( 'color' => '#0057b8', 'scheme' => 'dark' ) );
+check( 'dunkles Schema wählbar', false !== strpos( $dark_brand, 'data-scheme="dark"' ) );
+$bad_scheme = Renderer::shortcode( array( 'color' => '#0057b8', 'scheme' => 'neon' ) );
+check( 'unbekanntes Schema -> Einstellung', false !== strpos( $bad_scheme, 'data-scheme="light"' ) );
+update_option( Settings::OPTION, array_merge( Settings::get(), array( 'theme' => 'elegant' ) ) );
+
 echo "\n== XSS in Inhalten ==\n";
 $GLOBALS['ak_meta'][101]['_ak_preview_text'] = '<img src=x onerror=alert(1)>"><b>';
 $xss = Renderer::shortcode( array() );

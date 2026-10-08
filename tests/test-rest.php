@@ -129,5 +129,43 @@ check( 'Redakteur darf Tag 24 laden', door( 24 ) instanceof WP_REST_Response );
 $GLOBALS['ak_logged_in'] = false; $GLOBALS['ak_user_can'] = false;
 check( 'Abgemeldeter darf nicht', door( 24 ) instanceof WP_Error );
 
+echo "\n== Routenregistrierung und Berechtigungen ==\n";
+$GLOBALS['ak_routes'] = array();
+function register_rest_route( $namespace, $route, $args = array() ) {
+	$GLOBALS['ak_routes'][ $namespace . $route ] = $args;
+	return true;
+}
+Rest::register_routes();
+$routes = $GLOBALS['ak_routes'];
+
+check( 'Türchen-Route registriert', isset( $routes['adventskalender/v1/door/(?P<day>[0-9]{1,2})'] ) );
+check( 'Zustands-Route registriert', isset( $routes['adventskalender/v1/state'] ) );
+check( 'Paletten-Route registriert', isset( $routes['adventskalender/v1/palette'] ) );
+
+$public = array( 'adventskalender/v1/door/(?P<day>[0-9]{1,2})', 'adventskalender/v1/state' );
+foreach ( $public as $route ) {
+	check( "öffentlich lesbar: $route", '__return_true' === $routes[ $route ]['permission_callback'] );
+	check( "nur lesend: $route", 'GET' === $routes[ $route ]['methods'] );
+}
+
+$palette_permission = $routes['adventskalender/v1/palette']['permission_callback'];
+check( 'Palette nicht öffentlich', '__return_true' !== $palette_permission );
+check( 'Palette prüft Berechtigung', is_callable( $palette_permission ) );
+$GLOBALS['ak_user_can'] = false;
+check( 'ohne manage_options verweigert', false === (bool) call_user_func( $palette_permission ) );
+$GLOBALS['ak_user_can'] = true;
+check( 'mit manage_options erlaubt', true === (bool) call_user_func( $palette_permission ) );
+$GLOBALS['ak_user_can'] = false;
+
+echo "\n== Paletten-Antwort ==\n";
+$palette = Rest::get_palette( new WP_REST_Request( array( 'color' => '#0057b8', 'scheme' => 'dark' ) ) )->get_data();
+check( 'Farbe normalisiert', '#0057b8' === $palette['color'] );
+check( 'Schema übernommen', 'dark' === $palette['scheme'] );
+check( 'Palette enthalten', isset( $palette['palette']['--ak-door-face'] ) );
+check( 'Kontraste enthalten', isset( $palette['contrast']['number_on_door']['ratio'] ) );
+$bad = Rest::get_palette( new WP_REST_Request( array( 'color' => '</style><script>' ) ) )->get_data();
+check( 'ungültige Farbe -> Rückfall', '#1f5f46' === $bad['color'] );
+check( 'kein Markup in der Antwort', false === strpos( wp_json_encode( $bad ), '<script' ) );
+
 printf( "\n%d bestanden, %d fehlgeschlagen\n", $pass, $fail );
 exit( $fail > 0 ? 1 : 0 );

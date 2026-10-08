@@ -39,5 +39,6 @@ function register_setting() {}
 function number_format_i18n( $n ) { return (string) $n; }
 
 require_once __DIR__ . '/ns-stubs.php';
+require_once __DIR__ . '/../includes/class-color.php';
 require_once __DIR__ . '/../includes/class-settings.php';
 require_once __DIR__ . '/../includes/class-availability.php';

@@ -16,6 +16,8 @@ Ein eleganter, barrierefreier Adventskalender: zufällig angeordnete Türchen, 3
 
 Inhalte pro Türchen: Text, Bild, Bildergalerie, Video (YouTube, Vimeo, Mediathek, MP4) oder Text mit Bildern – mit wählbarer Anordnung.
 
+Farbwelt „Markenfarbe": Trage den Hex-Wert deiner Firmenfarbe ein – Türchen, Fläche, Zahlen, Akzente und Innenraum werden daraus abgeleitet. Alle Kontraste werden nach WCAG 2.1 berechnet und notfalls korrigiert, die Tagesnummern kippen automatisch zwischen hell und dunkel. Die Einstellungsseite zeigt eine Live-Vorschau mit den gemessenen Kontrastwerten.
+
 Drei Layouts für die geschlossenen Türchen:
 
 * Klassisch – elegante Türchen mit großer Zahl, ohne eigenes Bildmaterial
@@ -26,7 +28,7 @@ Weitere Funktionen:
 
 * Testmodus: öffnet alle Türchen unabhängig vom Datum
 * Redaktionsvorschau nur für angemeldete Redakteure
-* Fünf Farbwelten, optionaler Schneefall, optionales Hintergrundbild
+* Sechs Farbwelten inklusive frei wählbarer Markenfarbe, optionaler Schneefall, optionales Hintergrundbild
 * Shortcode `[adventskalender]` und Block „Adventskalender"
 * Barrierefrei: Tastaturbedienung, Fokusführung, reduzierte Bewegung
 
@@ -48,6 +50,10 @@ Entweder über die Redaktionsvorschau (du bist angemeldet und siehst alles) oder
 = Funktioniert das Plugin mit einem Page-Cache? =
 
 Ja. Der Kalender gleicht den Freischaltzustand beim Laden über eine nicht gecachte REST-Route ab.
+
+= Kann ich die Farben an unser Corporate Design anpassen? =
+
+Ja. Wähle die Farbwelt „Markenfarbe" und trage den Hex-Wert eurer Primärfarbe ein. Die gesamte Palette wird daraus abgeleitet, inklusive Kontrastprüfung nach WCAG 2.1. Per Shortcode geht es auch direkt: `[adventskalender color="#0057B8"]`.
 
 = Bleibt die zufällige Anordnung gleich? =
 

@@ -40,6 +40,7 @@ function plugin_url_base(): string {
 	return plugin_dir_url( PLUGIN_FILE );
 }
 
+require_once __DIR__ . '/includes/class-color.php';
 require_once __DIR__ . '/includes/class-settings.php';
 require_once __DIR__ . '/includes/class-doors.php';
 require_once __DIR__ . '/includes/class-availability.php';

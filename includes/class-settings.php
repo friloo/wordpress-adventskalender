@@ -46,6 +46,7 @@ class Settings {
 			'warm'    => __( 'Warm – Rot, Kupfer & Creme', 'adventskalender' ),
 			'modern'  => __( 'Modern – Graphit & Mint', 'adventskalender' ),
 			'candy'   => __( 'Candy – Pastelltöne', 'adventskalender' ),
+			'brand'   => __( 'Markenfarbe – Palette aus deiner Firmenfarbe', 'adventskalender' ),
 		);
 	}
 
@@ -61,6 +62,8 @@ class Settings {
 			'editor_preview'    => 1,
 			'layout'            => 'classic',
 			'theme'             => 'nordic',
+			'brand_color'       => '#1f5f46',
+			'brand_scheme'      => 'light',
 			'columns'           => 6,
 			'shuffle'           => 1,
 			'shuffle_seed'      => 1,
@@ -166,6 +169,15 @@ class Settings {
 		foreach ( array( 'mosaic_image', 'background_image' ) as $media_key ) {
 			$out[ $media_key ] = isset( $input[ $media_key ] ) ? self::sanitize_attachment_id( $input[ $media_key ] ) : 0;
 		}
+
+		// Markenfarbe: nur gültige Hex-Werte, sonst der bisherige Wert.
+		$out['brand_color'] = isset( $input['brand_color'] )
+			? Color::sanitize_hex( $input['brand_color'], (string) $current['brand_color'] )
+			: (string) $current['brand_color'];
+
+		$out['brand_scheme'] = isset( $input['brand_scheme'] ) && array_key_exists( $input['brand_scheme'], Color::schemes() )
+			? $input['brand_scheme']
+			: $defaults['brand_scheme'];
 
 		// Texte.
 		$out['heading']       = isset( $input['heading'] ) ? sanitize_text_field( (string) $input['heading'] ) : '';

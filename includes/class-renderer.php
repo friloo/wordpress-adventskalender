@@ -98,6 +98,8 @@ class Renderer {
 				'snow'    => '',
 				'heading' => '',
 				'intro'   => '',
+				'color'   => '',
+				'scheme'  => '',
 			),
 			is_array( $atts ) ? $atts : array(),
 			'adventskalender'
@@ -142,6 +144,18 @@ class Renderer {
 		$heading = '' !== (string) ( $atts['heading'] ?? '' ) ? sanitize_text_field( (string) $atts['heading'] ) : (string) $settings['heading'];
 		$intro   = '' !== (string) ( $atts['intro'] ?? '' ) ? wp_kses_post( (string) $atts['intro'] ) : (string) $settings['intro'];
 
+		// Eine im Shortcode angegebene Farbe aktiviert die Markenfarbwelt.
+		$color = (string) ( $atts['color'] ?? '' );
+		if ( '' !== $color ) {
+			$color = Color::sanitize_hex( $color, (string) $settings['brand_color'] );
+			$theme = 'brand';
+		} else {
+			$color = Color::sanitize_hex( $settings['brand_color'] );
+		}
+
+		$scheme = (string) ( $atts['scheme'] ?? '' );
+		$scheme = array_key_exists( $scheme, Color::schemes() ) ? $scheme : (string) $settings['brand_scheme'];
+
 		return array(
 			'year'     => $year,
 			'layout'   => $layout,
@@ -151,6 +165,8 @@ class Renderer {
 			'snow'     => $snow,
 			'heading'  => $heading,
 			'intro'    => $intro,
+			'color'    => $color,
+			'scheme'   => $scheme,
 			'settings' => $settings,
 		);
 	}
@@ -259,6 +275,14 @@ class Renderer {
 			$styles[] = '--ak-bg:url(' . esc_url_raw( $background_url ) . ')';
 		}
 
+		// Markenfarbwelt: komplette Palette aus der Firmenfarbe ableiten.
+		if ( 'brand' === $args['theme'] ) {
+			$styles = array_merge(
+				$styles,
+				Color::palette_declarations( (string) $args['color'], (string) $args['scheme'] )
+			);
+		}
+
 		$classes = array(
 			'ak-calendar',
 			'ak-calendar--' . $args['layout'],
@@ -280,6 +304,9 @@ class Renderer {
 			data-ak-calendar
 			data-year="<?php echo esc_attr( (string) $year ); ?>"
 			data-layout="<?php echo esc_attr( (string) $args['layout'] ); ?>"
+			<?php if ( 'brand' === $args['theme'] ) : ?>
+				data-scheme="<?php echo esc_attr( (string) $args['scheme'] ); ?>"
+			<?php endif; ?>
 			data-remember="<?php echo esc_attr( $settings['remember_opened'] ? '1' : '0' ); ?>"
 			<?php if ( '' !== $mosaic_url ) : ?>
 				data-mosaic="<?php echo esc_url( $mosaic_url ); ?>"

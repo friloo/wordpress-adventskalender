@@ -12,6 +12,7 @@
 
 $suites = array(
 	'Logik & Einstellungen' => 'test-logic.php',
+	'Farben & Markenwelt'   => 'test-color.php',
 	'Anordnung der Türchen' => 'test-arrangement.php',
 	'Frontend-Ausgabe'      => 'test-render.php',
 	'REST-Schnittstelle'    => 'test-rest.php',

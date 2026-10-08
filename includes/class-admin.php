@@ -128,10 +128,21 @@ class Admin {
 
 		wp_enqueue_media();
 
+		$is_settings = false !== strpos( $hook_suffix, self::PAGE_SETTINGS );
+		$dependencies = array( 'jquery' );
+
+		if ( $is_settings ) {
+			// Für die Live-Vorschau der Markenfarbe: Farbwähler und das
+			// echte Frontend-Stylesheet, damit die Vorschau stimmt.
+			wp_enqueue_style( 'wp-color-picker' );
+			wp_enqueue_style( 'adventskalender' );
+			$dependencies[] = 'wp-color-picker';
+		}
+
 		wp_enqueue_script(
 			'adventskalender-admin',
 			plugin_url_base() . 'assets/js/admin.js',
-			array( 'jquery' ),
+			$dependencies,
 			VERSION,
 			true
 		);
@@ -140,6 +151,8 @@ class Admin {
 			'adventskalender-admin',
 			'AdventskalenderAdmin',
 			array(
+				'restUrl' => esc_url_raw( rest_url( Rest::NAMESPACE_V1 . '/' ) ),
+				'nonce'   => wp_create_nonce( 'wp_rest' ),
 				'i18n' => array(
 					'selectImage'  => __( 'Bild auswählen', 'adventskalender' ),
 					'selectVideo'  => __( 'Video auswählen', 'adventskalender' ),
@@ -150,6 +163,9 @@ class Admin {
 					'remove'       => __( 'Entfernen', 'adventskalender' ),
 					'copied'       => __( 'Kopiert!', 'adventskalender' ),
 					'confirmShuffle' => __( 'Neu mischen ändert die Anordnung für alle Besucher. Fortfahren?', 'adventskalender' ),
+					'pickColor'    => __( 'Markenfarbe wählen', 'adventskalender' ),
+					'contrastOk'   => __( 'ausreichend', 'adventskalender' ),
+					'contrastLow'  => __( 'zu gering', 'adventskalender' ),
 				),
 			)
 		);
@@ -708,11 +724,44 @@ class Admin {
 						<tr>
 							<th scope="row"><label for="ak-theme"><?php esc_html_e( 'Farbwelt', 'adventskalender' ); ?></label></th>
 							<td>
-								<select id="ak-theme" name="<?php echo esc_attr( $name ); ?>[theme]">
+								<select id="ak-theme" name="<?php echo esc_attr( $name ); ?>[theme]" data-ak-theme-select>
 									<?php foreach ( Settings::themes() as $key => $label ) : ?>
 										<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $key, $s['theme'] ); ?>><?php echo esc_html( $label ); ?></option>
 									<?php endforeach; ?>
 								</select>
+							</td>
+						</tr>
+						<tr class="ak-brand-row" data-ak-when-theme="brand">
+							<th scope="row"><label for="ak-brand-color"><?php esc_html_e( 'Markenfarbe', 'adventskalender' ); ?></label></th>
+							<td>
+								<input
+									type="text"
+									id="ak-brand-color"
+									class="ak-color-field"
+									name="<?php echo esc_attr( $name ); ?>[brand_color]"
+									value="<?php echo esc_attr( (string) $s['brand_color'] ); ?>"
+									data-default-color="<?php echo esc_attr( (string) Settings::defaults()['brand_color'] ); ?>"
+									data-ak-brand-color
+								/>
+								<p class="description">
+									<?php esc_html_e( 'Trage den Hex-Wert deiner Firmenfarbe ein, z. B. #0057B8. Alles andere – Türchen, Fläche, Zahlen, Akzente – wird daraus abgeleitet.', 'adventskalender' ); ?>
+								</p>
+							</td>
+						</tr>
+						<tr class="ak-brand-row" data-ak-when-theme="brand">
+							<th scope="row"><label for="ak-brand-scheme"><?php esc_html_e( 'Helligkeit', 'adventskalender' ); ?></label></th>
+							<td>
+								<select id="ak-brand-scheme" name="<?php echo esc_attr( $name ); ?>[brand_scheme]" data-ak-brand-scheme>
+									<?php foreach ( Color::schemes() as $key => $label ) : ?>
+										<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $key, $s['brand_scheme'] ); ?>><?php echo esc_html( $label ); ?></option>
+									<?php endforeach; ?>
+								</select>
+							</td>
+						</tr>
+						<tr class="ak-brand-row" data-ak-when-theme="brand">
+							<th scope="row"><?php esc_html_e( 'Vorschau', 'adventskalender' ); ?></th>
+							<td>
+								<?php self::brand_preview( (string) $s['brand_color'], (string) $s['brand_scheme'] ); ?>
 							</td>
 						</tr>
 						<tr>
@@ -848,6 +897,96 @@ class Admin {
 
 				<?php submit_button( __( 'Einstellungen speichern', 'adventskalender' ) ); ?>
 			</form>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Rendert die Live-Vorschau der Markenfarbwelt.
+	 *
+	 * Verwendet bewusst dieselben Klassen wie das Frontend, damit die
+	 * Vorschau wirklich zeigt, was Besucher sehen.
+	 *
+	 * @param string $color  Markenfarbe.
+	 * @param string $scheme Helligkeitsschema.
+	 */
+	public static function brand_preview( string $color, string $scheme ): void {
+		$report  = Color::report( $color, $scheme );
+		$palette = $report['palette'];
+
+		$styles = array( '--ak-cols:3' );
+		foreach ( $palette as $property => $value ) {
+			$styles[] = $property . ':' . $value;
+		}
+
+		$swatches = array(
+			'--ak-door-base'   => __( 'Türchen', 'adventskalender' ),
+			'--ak-number'      => __( 'Zahl', 'adventskalender' ),
+			'--ak-canvas-flat' => __( 'Fläche', 'adventskalender' ),
+			'--ak-accent'      => __( 'Akzent', 'adventskalender' ),
+			'--ak-knob'        => __( 'Türknauf', 'adventskalender' ),
+			'--ak-inside'      => __( 'Innenraum', 'adventskalender' ),
+		);
+
+		$teasers = array(
+			__( 'Ein kleiner Gruß', 'adventskalender' ),
+			__( 'Zum Mitnehmen', 'adventskalender' ),
+			__( 'Heute für dich', 'adventskalender' ),
+		);
+		?>
+		<div class="ak-brand-preview" data-ak-brand-preview>
+			<div
+				class="ak-calendar ak-calendar--classic ak-calendar--theme-brand ak-brand-preview__calendar"
+				data-scheme="<?php echo esc_attr( (string) $report['scheme'] ); ?>"
+				style="<?php echo esc_attr( implode( ';', $styles ) ); ?>"
+				data-ak-preview-calendar
+			>
+				<div class="ak-grid-wrap">
+					<ul class="ak-grid" role="list">
+						<?php foreach ( array( 7, 15, 3 ) as $index => $day ) : ?>
+							<li class="ak-cell">
+								<span class="ak-door ak-door--closed<?php echo 2 === $index ? ' is-open' : ''; ?>" aria-hidden="true">
+									<span class="ak-door__inside">
+										<span class="ak-door__preview">
+											<span class="ak-door__preview-text"><?php echo esc_html( $teasers[ $index ] ); ?></span>
+										</span>
+									</span>
+									<span class="ak-door__flap">
+										<span class="ak-door__front">
+											<span class="ak-door__number"><?php echo esc_html( (string) $day ); ?></span>
+											<span class="ak-door__knob"></span>
+										</span>
+										<span class="ak-door__back"></span>
+									</span>
+								</span>
+							</li>
+						<?php endforeach; ?>
+					</ul>
+				</div>
+			</div>
+
+			<ul class="ak-brand-swatches" data-ak-swatches>
+				<?php foreach ( $swatches as $property => $label ) : ?>
+					<li data-key="<?php echo esc_attr( $property ); ?>">
+						<span class="ak-brand-swatches__chip" style="background:<?php echo esc_attr( (string) $palette[ $property ] ); ?>"></span>
+						<span class="ak-brand-swatches__label"><?php echo esc_html( $label ); ?></span>
+						<code><?php echo esc_html( (string) $palette[ $property ] ); ?></code>
+					</li>
+				<?php endforeach; ?>
+			</ul>
+
+			<p class="description"><?php esc_html_e( 'Geprüfte Kontraste (WCAG 2.1):', 'adventskalender' ); ?></p>
+			<ul class="ak-brand-contrast" data-ak-contrast>
+				<?php foreach ( $report['contrast'] as $key => $check ) : ?>
+					<li data-key="<?php echo esc_attr( $key ); ?>" class="<?php echo $check['passes'] ? 'is-ok' : 'is-low'; ?>">
+						<span class="ak-brand-contrast__mark" aria-hidden="true"><?php echo $check['passes'] ? '✓' : '!'; ?></span>
+						<span class="ak-brand-contrast__label"><?php echo esc_html( (string) $check['label'] ); ?></span>
+						<span class="ak-brand-contrast__ratio">
+							<?php echo esc_html( number_format_i18n( (float) $check['ratio'], 2 ) ); ?>:1
+						</span>
+					</li>
+				<?php endforeach; ?>
+			</ul>
 		</div>
 		<?php
 	}

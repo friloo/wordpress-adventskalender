@@ -558,3 +558,109 @@
 	font-size: .85rem;
 	line-height: 1.5;
 }
+
+/* ------------------------------------------------- Markenfarbe & Vorschau */
+
+tr[data-ak-when-theme][hidden] {
+	display: none;
+}
+
+.ak-brand-preview {
+	max-width: 520px;
+}
+
+.ak-brand-preview__calendar {
+	margin: 0 0 14px;
+	pointer-events: none;
+}
+
+/* Im Admin ist die Vorschau klein – Türchen etwas kompakter halten. */
+.ak-brand-preview__calendar .ak-grid {
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.ak-brand-swatches {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+	gap: 6px 14px;
+	margin: 0 0 14px;
+	padding: 0;
+	list-style: none;
+}
+
+.ak-brand-swatches li {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	margin: 0;
+	font-size: .82rem;
+}
+
+.ak-brand-swatches__chip {
+	flex: 0 0 auto;
+	width: 20px;
+	height: 20px;
+	border: 1px solid rgba(0, 0, 0, .18);
+	border-radius: 5px;
+}
+
+.ak-brand-swatches__label {
+	flex: 1 1 auto;
+	color: #50575e;
+}
+
+.ak-brand-swatches code {
+	padding: 1px 5px;
+	background: #f0f0f1;
+	font-size: .76rem;
+}
+
+.ak-brand-contrast {
+	margin: 4px 0 0;
+	padding: 0;
+	list-style: none;
+}
+
+.ak-brand-contrast li {
+	display: flex;
+	gap: 8px;
+	align-items: baseline;
+	margin: 0 0 4px;
+	font-size: .84rem;
+}
+
+.ak-brand-contrast__mark {
+	display: inline-grid;
+	flex: 0 0 auto;
+	place-items: center;
+	width: 18px;
+	height: 18px;
+	border-radius: 50%;
+	color: #fff;
+	font-size: .72rem;
+	font-weight: 700;
+	line-height: 1;
+}
+
+.ak-brand-contrast .is-ok .ak-brand-contrast__mark,
+.ak-brand-contrast li.is-ok .ak-brand-contrast__mark {
+	background: #2a9d5c;
+}
+
+.ak-brand-contrast li.is-low .ak-brand-contrast__mark {
+	background: #cc5d4d;
+}
+
+.ak-brand-contrast__label {
+	flex: 1 1 auto;
+	color: #50575e;
+}
+
+.ak-brand-contrast__ratio {
+	font-variant-numeric: tabular-nums;
+	font-weight: 600;
+}
+
+.ak-brand-contrast li.is-low .ak-brand-contrast__ratio {
+	color: #b32d2e;
+}

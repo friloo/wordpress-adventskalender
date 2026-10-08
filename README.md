@@ -13,7 +13,9 @@ oder Text mit Bildern.
   * `classic` – elegante Türchen mit großer Zahl, ohne jedes Bild sofort schön
   * `mosaic` – **ein** großes Bild, jedes Türchen zeigt seinen Ausschnitt
   * `individual` – jedes Türchen mit eigenem Motiv
-* **Fünf Farbwelten**: Nordisch, Elegant, Warm, Modern, Candy.
+* **Sechs Farbwelten**: Nordisch, Elegant, Warm, Modern, Candy – und
+  **Markenfarbe**: du trägst deinen Firmen-Hex-Wert ein, alles andere wird
+  daraus abgeleitet (siehe unten).
 * **Testmodus** – öffnet alle Türchen unabhängig vom Datum, mit deutlichem Hinweis.
 * **Redaktionsvorschau** – angemeldete Redakteure sehen alles, Besucher nur das Freigeschaltete.
 * **Sicher:** gesperrte Inhalte liegen nie im Quellcode der Seite. Sie werden erst nach
@@ -47,7 +49,9 @@ Anforderungen: WordPress 6.2+, PHP 7.4+.
 |-----------|-----------------------------------------|------------------------|
 | `year`    | 2000–2100                               | Einstellung            |
 | `layout`  | `classic`, `mosaic`, `individual`       | Einstellung            |
-| `theme`   | `nordic`, `elegant`, `warm`, `modern`, `candy` | Einstellung     |
+| `theme`   | `nordic`, `elegant`, `warm`, `modern`, `candy`, `brand` | Einstellung |
+| `color`   | Hex-Wert, z. B. `#0057B8` (aktiviert `brand`) | Einstellung     |
+| `scheme`  | `light`, `dark` (nur bei `brand`)        | Einstellung            |
 | `columns` | 2–8                                     | Einstellung            |
 | `shuffle` | `1`/`0`                                 | Einstellung            |
 | `snow`    | `1`/`0`                                 | Einstellung            |
@@ -58,6 +62,41 @@ Anforderungen: WordPress 6.2+, PHP 7.4+.
 
 Im Block-Editor nach **Adventskalender** suchen. Alle Optionen stehen in der
 Seitenleiste; leer gelassene Felder übernehmen die globalen Einstellungen.
+
+## Farbwelt „Markenfarbe"
+
+Für Firmenseiten: unter **Adventskalender → Einstellungen → Darstellung** die
+Farbwelt *Markenfarbe* wählen und den Hex-Wert der Primärfarbe eintragen.
+Daraus werden abgeleitet:
+
+* Türchenfläche als dreistufiger Verlauf im exakten Markenfarbton
+* Kalenderfläche als sehr heller bzw. sehr dunkler Hauch derselben Farbe
+* Tagesnummer, Überschrift, Türknauf, Fokusring, Innenraum und Klappenrückseite
+
+Zwei Dinge macht das Plugin dabei automatisch:
+
+1. **Lesbarkeit statt Glückssache.** Alle Kontraste werden nach WCAG 2.1
+   berechnet und notfalls korrigiert – bei Bedarf kippt die Tagesnummer von
+   Weiß auf Dunkel. Eine knallgelbe Marke bekommt dunkle Zahlen, eine
+   dunkelblaue helle. Der Farbton bleibt dabei immer erhalten, die Marke also
+   erkennbar.
+2. **Sehr helle und sehr dunkle Marken** werden für die Türchen in ein
+   brauchbares Helligkeitsband geholt, damit sie als Objekte wirken und nicht
+   mit der Fläche verschwimmen. Die reine Markenfarbe bleibt als Akzent präsent.
+
+Die Einstellungsseite zeigt eine **Live-Vorschau** mit echten Türchen, den
+abgeleiteten Farbwerten und den gemessenen Kontrasten. Sie rechnet nicht selbst,
+sondern fragt dieselbe Server-Berechnung ab, die auch das Frontend verwendet –
+Vorschau und Ausgabe können also nicht auseinanderlaufen.
+
+Per Shortcode geht es auch ohne Umweg über die Einstellungen:
+
+```
+[adventskalender color="#0057B8"]
+[adventskalender color="#0057B8" scheme="dark"]
+```
+
+Mit `scheme` wählst du zwischen heller und dunkler Kalenderfläche.
 
 ## Türchen pflegen
 
@@ -140,6 +179,11 @@ Abgedeckt sind unter anderem:
 * Testmodus und Redaktionsvorschau (auch abgeschaltet)
 * Validierung der Einstellungen und Shortcode-Attribute (Allowlists, Medien-IDs)
 * Stabilität und Streuung der zufälligen Anordnung
+* Farbmathematik und Markenpalette: HSL-Umrechnung, Kontrastberechnung nach
+  WCAG, und ein Durchlauf über **2520 Markenfarben** (alle Farbtöne,
+  Sättigungen und Helligkeiten, beide Schemata) mit der Zusicherung, dass
+  Tagesnummer, Text, Akzent, Türknauf und Vorschautext überall die
+  geforderten Kontraste erreichen
 * **Zusicherung, dass kein Inhalt eines gesperrten Türchens im HTML oder in
   einer REST-Antwort auftaucht** – inklusive Umgehungsversuch über den
   `year`-Parameter

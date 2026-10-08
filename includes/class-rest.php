@@ -53,6 +53,29 @@ class Rest {
 			)
 		);
 
+		// Nur für die Live-Vorschau im Adminbereich.
+		register_rest_route(
+			self::NAMESPACE_V1,
+			'/palette',
+			array(
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => array( __CLASS__, 'get_palette' ),
+				'permission_callback' => static function () {
+					return current_user_can( 'manage_options' );
+				},
+				'args'                => array(
+					'color'  => array(
+						'required' => true,
+						'type'     => 'string',
+					),
+					'scheme' => array(
+						'required' => false,
+						'type'     => 'string',
+					),
+				),
+			)
+		);
+
 		register_rest_route(
 			self::NAMESPACE_V1,
 			'/state',
@@ -169,6 +192,23 @@ class Rest {
 			),
 			200
 		);
+	}
+
+	/**
+	 * Liefert die abgeleitete Palette einer Markenfarbe.
+	 *
+	 * Ausschließlich für die Vorschau in den Einstellungen – die
+	 * Berechtigungsprüfung verlangt „manage_options“.
+	 *
+	 * @param \WP_REST_Request $request Anfrage.
+	 */
+	public static function get_palette( \WP_REST_Request $request ): \WP_REST_Response {
+		nocache_headers();
+
+		$color  = Color::sanitize_hex( $request->get_param( 'color' ) );
+		$scheme = (string) $request->get_param( 'scheme' );
+
+		return new \WP_REST_Response( Color::report( $color, $scheme ), 200 );
 	}
 
 	/**

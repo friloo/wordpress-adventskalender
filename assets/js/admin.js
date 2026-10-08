@@ -243,12 +243,157 @@
 		} );
 	}
 
+	/**
+	 * Markenfarbe: Farbwähler, Live-Vorschau und Feldsteuerung.
+	 */
+	function initBrandColor() {
+		var field = document.querySelector( '[data-ak-brand-color]' );
+		var preview = document.querySelector( '[data-ak-brand-preview]' );
+		if ( ! field || ! preview ) {
+			return;
+		}
+
+		var calendar = preview.querySelector( '[data-ak-preview-calendar]' );
+		var swatches = preview.querySelector( '[data-ak-swatches]' );
+		var contrast = preview.querySelector( '[data-ak-contrast]' );
+		var scheme = document.querySelector( '[data-ak-brand-scheme]' );
+		var timer = null;
+		var token = 0;
+
+		/**
+		 * Holt die Palette vom Server – dieselbe Berechnung wie im Frontend,
+		 * damit Vorschau und Ausgabe nicht auseinanderlaufen können.
+		 */
+		function refresh() {
+			if ( ! CONFIG.restUrl || ! window.fetch ) {
+				return;
+			}
+
+			var color = field.value;
+			var mode = scheme ? scheme.value : 'light';
+			var current = ++token;
+
+			var url = CONFIG.restUrl + 'palette?color=' + encodeURIComponent( color ) +
+				'&scheme=' + encodeURIComponent( mode );
+
+			window.fetch( url, {
+				credentials: 'same-origin',
+				headers: { Accept: 'application/json', 'X-WP-Nonce': CONFIG.nonce || '' }
+			} )
+				.then( function ( response ) {
+					return response.ok ? response.json() : null;
+				} )
+				.then( function ( data ) {
+					if ( ! data || current !== token ) {
+						return;
+					}
+					apply( data );
+				} )
+				.catch( function () {
+					/* Vorschau bleibt wie sie ist. */
+				} );
+		}
+
+		/**
+		 * Überträgt die Serverantwort in die Vorschau.
+		 */
+		function apply( data ) {
+			if ( calendar && data.palette ) {
+				Object.keys( data.palette ).forEach( function ( property ) {
+					calendar.style.setProperty( property, data.palette[ property ] );
+				} );
+				calendar.setAttribute( 'data-scheme', data.scheme || 'light' );
+			}
+
+			if ( swatches && data.palette ) {
+				Array.prototype.forEach.call( swatches.children, function ( item ) {
+					var key = item.getAttribute( 'data-key' );
+					var value = data.palette[ key ];
+					if ( ! value ) {
+						return;
+					}
+					var chip = item.querySelector( '.ak-brand-swatches__chip' );
+					var code = item.querySelector( 'code' );
+					if ( chip ) {
+						chip.style.background = value;
+					}
+					if ( code ) {
+						code.textContent = value;
+					}
+				} );
+			}
+
+			if ( contrast && data.contrast ) {
+				Array.prototype.forEach.call( contrast.children, function ( item ) {
+					var key = item.getAttribute( 'data-key' );
+					var check = data.contrast[ key ];
+					if ( ! check ) {
+						return;
+					}
+					item.classList.toggle( 'is-ok', !! check.passes );
+					item.classList.toggle( 'is-low', ! check.passes );
+					var mark = item.querySelector( '.ak-brand-contrast__mark' );
+					var ratio = item.querySelector( '.ak-brand-contrast__ratio' );
+					if ( mark ) {
+						mark.textContent = check.passes ? '✓' : '!';
+					}
+					if ( ratio ) {
+						ratio.textContent = String( check.ratio ).replace( '.', ',' ) + ':1';
+					}
+				} );
+			}
+		}
+
+		function schedule() {
+			window.clearTimeout( timer );
+			timer = window.setTimeout( refresh, 180 );
+		}
+
+		// Farbwähler von WordPress, wenn verfügbar.
+		if ( $ && $.fn && $.fn.wpColorPicker ) {
+			$( field ).wpColorPicker( {
+				defaultColor: field.getAttribute( 'data-default-color' ),
+				change: schedule,
+				clear: schedule
+			} );
+		} else {
+			field.addEventListener( 'input', schedule );
+		}
+
+		field.addEventListener( 'change', schedule );
+		if ( scheme ) {
+			scheme.addEventListener( 'change', refresh );
+		}
+	}
+
+	/**
+	 * Blendet die Markenfarbfelder nur für die passende Farbwelt ein.
+	 */
+	function initThemeFields() {
+		var select = document.querySelector( '[data-ak-theme-select]' );
+		var rows = document.querySelectorAll( '[data-ak-when-theme]' );
+		if ( ! select || ! rows.length ) {
+			return;
+		}
+
+		function apply() {
+			Array.prototype.forEach.call( rows, function ( row ) {
+				row.hidden = row.getAttribute( 'data-ak-when-theme' ) !== select.value;
+			} );
+		}
+
+		select.addEventListener( 'change', apply );
+		apply();
+	}
+
 	function boot() {
 		Array.prototype.forEach.call( document.querySelectorAll( '[data-ak-media]' ), initMediaField );
 		Array.prototype.forEach.call( document.querySelectorAll( '[data-ak-gallery]' ), initGalleryField );
 		Array.prototype.forEach.call( document.querySelectorAll( '[data-ak-fields]' ), initConditionalFields );
 		initCopyButtons();
 		initShuffleConfirm();
+		initThemeFields();
+		initBrandColor();
 	}
 
 	if ( 'loading' === document.readyState ) {
