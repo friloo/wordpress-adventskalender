@@ -200,13 +200,23 @@
 		if ( ! opened.length ) {
 			return;
 		}
+		var self = this;
 		this.doors.forEach( function ( door ) {
 			var day = parseInt( door.getAttribute( 'data-day' ), 10 );
 			if ( opened.indexOf( day ) !== -1 && 'locked' !== door.getAttribute( 'data-state' ) ) {
-				door.classList.add( 'is-open' );
-				door.setAttribute( 'aria-expanded', 'true' );
+				self.markOpen( door, day );
 			}
 		} );
+	};
+
+	/**
+	 * Markiert ein Türchen als geöffnet – inklusive passender Beschriftung
+	 * für Screenreader.
+	 */
+	Calendar.prototype.markOpen = function ( door, day ) {
+		door.classList.add( 'is-open' );
+		door.setAttribute( 'aria-expanded', 'true' );
+		door.setAttribute( 'aria-label', format( I18N.alreadyOpen, [ day ] ) );
 	};
 
 	/**
@@ -326,8 +336,7 @@
 
 		var alreadyOpen = door.classList.contains( 'is-open' );
 
-		door.classList.add( 'is-open' );
-		door.setAttribute( 'aria-expanded', 'true' );
+		this.markOpen( door, day );
 		this.rememberOpened( day );
 
 		var delay = alreadyOpen || REDUCED ? 0 : 520;
@@ -634,8 +643,7 @@
 
 		var door = this.root.querySelector( '.ak-door[data-day="' + target + '"]' );
 		if ( door ) {
-			door.classList.add( 'is-open' );
-			door.setAttribute( 'aria-expanded', 'true' );
+			this.markOpen( door, target );
 			this.rememberOpened( target );
 		}
 		this.openLightbox( target, door );

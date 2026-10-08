@@ -143,3 +143,6 @@ Abgedeckt sind unter anderem:
 * **Zusicherung, dass kein Inhalt eines gesperrten Türchens im HTML oder in
   einer REST-Antwort auftaucht** – inklusive Umgehungsversuch über den
   `year`-Parameter
+* Rauchtest der Adminoberfläche: Übersicht, Einstellungen, Metaboxen und
+  Listenspalten rendern fehlerfrei, escapen Titel und brechen ohne
+  Berechtigung ab

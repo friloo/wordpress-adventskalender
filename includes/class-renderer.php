@@ -66,14 +66,12 @@ class Renderer {
 			'restUrl' => esc_url_raw( rest_url( Rest::NAMESPACE_V1 . '/' ) ),
 			'nonce'   => is_user_logged_in() ? wp_create_nonce( 'wp_rest' ) : '',
 			'i18n'    => array(
-				'loading'      => __( 'Türchen wird geöffnet …', 'adventskalender' ),
-				'error'        => __( 'Der Inhalt konnte nicht geladen werden. Bitte später erneut versuchen.', 'adventskalender' ),
-				'empty'        => __( 'Für dieses Türchen ist noch kein Inhalt hinterlegt.', 'adventskalender' ),
-				'close'        => __( 'Schließen', 'adventskalender' ),
-				'doorLabel'    => __( 'Türchen %d', 'adventskalender' ),
-				'openDoor'     => __( 'Türchen %d öffnen', 'adventskalender' ),
-				'lockedDoor'   => __( 'Türchen %1$d – %2$s', 'adventskalender' ),
-				'alreadyOpen'  => __( 'Türchen %d ansehen', 'adventskalender' ),
+				'loading'     => __( 'Türchen wird geöffnet …', 'adventskalender' ),
+				'error'       => __( 'Der Inhalt konnte nicht geladen werden. Bitte später erneut versuchen.', 'adventskalender' ),
+				'doorLabel'   => __( 'Türchen %d', 'adventskalender' ),
+				'openDoor'    => __( 'Türchen %d öffnen', 'adventskalender' ),
+				'lockedDoor'  => __( 'Türchen %1$d – %2$s', 'adventskalender' ),
+				'alreadyOpen' => __( 'Türchen %d erneut ansehen', 'adventskalender' ),
 			),
 		);
 

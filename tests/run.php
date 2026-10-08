@@ -15,6 +15,7 @@ $suites = array(
 	'Anordnung der Türchen' => 'test-arrangement.php',
 	'Frontend-Ausgabe'      => 'test-render.php',
 	'REST-Schnittstelle'    => 'test-rest.php',
+	'Adminoberfläche'       => 'test-admin.php',
 );
 
 $php     = defined( 'PHP_BINARY' ) && PHP_BINARY ? PHP_BINARY : 'php';
