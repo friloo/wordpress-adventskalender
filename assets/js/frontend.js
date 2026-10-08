@@ -109,50 +109,83 @@
 	};
 
 	/**
-	 * Ermittelt die tatsächlich gerenderte Spaltenzahl des Rasters.
-	 */
-	Calendar.prototype.detectColumns = function () {
-		var cells = this.root.querySelectorAll( '.ak-cell' );
-		if ( ! cells.length ) {
-			return 1;
-		}
-		var firstTop = cells[ 0 ].offsetTop;
-		var columns = 0;
-		for ( var i = 0; i < cells.length; i++ ) {
-			if ( cells[ i ].offsetTop !== firstTop ) {
-				break;
-			}
-			columns++;
-		}
-		return Math.max( 1, columns );
-	};
-
-	/**
-	 * Verteilt das Mosaik-Bild passend zum aktuellen Raster.
+	 * Verteilt das Mosaik-Bild über das Raster.
+	 *
+	 * Rechnet in Pixeln statt in Prozent pro Zelle: nur so bleiben die
+	 * Lücken zwischen den Türchen Teil des Bildes, das Seitenverhältnis
+	 * erhalten (Bild wird beschnitten, nicht verzerrt) und die Spaltenzahl
+	 * egal. Das serverseitige Prozentverfahren bleibt als Rückfall für
+	 * Besucher ohne JavaScript bestehen.
 	 */
 	Calendar.prototype.applyMosaic = function () {
 		if ( ! this.mosaic || 'mosaic' !== this.layout ) {
 			return;
 		}
 
-		var cols = this.detectColumns();
-		var total = this.doors.length;
-		var rows = Math.max( 1, Math.ceil( total / cols ) );
-		var url = this.mosaic;
+		if ( this.mosaicSize ) {
+			this.paintMosaic();
+			return;
+		}
 
-		this.doors.forEach( function ( door, index ) {
+		var self = this;
+		var probe = new Image();
+		probe.onload = function () {
+			self.mosaicSize = { w: probe.naturalWidth || 0, h: probe.naturalHeight || 0 };
+			self.paintMosaic();
+		};
+		probe.onerror = function () {
+			// Maße unbekannt: Bild über das Raster spannen.
+			self.mosaicSize = { w: 0, h: 0 };
+			self.paintMosaic();
+		};
+		probe.src = this.mosaic;
+	};
+
+	/**
+	 * Schreibt die berechneten Hintergrundwerte in die Türchen.
+	 */
+	Calendar.prototype.paintMosaic = function () {
+		var grid = this.root.querySelector( '.ak-grid' );
+		if ( ! grid ) {
+			return;
+		}
+
+		var area = grid.getBoundingClientRect();
+		if ( ! area.width || ! area.height ) {
+			return;
+		}
+
+		var natural = this.mosaicSize || { w: 0, h: 0 };
+		var width = area.width;
+		var height = area.height;
+		var offsetX = 0;
+		var offsetY = 0;
+
+		if ( natural.w > 0 && natural.h > 0 ) {
+			// Wie "cover": füllt das Raster, ohne zu verzerren.
+			var scale = Math.max( area.width / natural.w, area.height / natural.h );
+			width = natural.w * scale;
+			height = natural.h * scale;
+			offsetX = ( area.width - width ) / 2;
+			offsetY = ( area.height - height ) / 2;
+		}
+
+		var url = 'url("' + this.mosaic.replace( /"/g, '%22' ) + '")';
+		var size = Math.round( width ) + 'px ' + Math.round( height ) + 'px';
+
+		this.doors.forEach( function ( door ) {
 			var front = door.querySelector( '.ak-door__front' );
 			if ( ! front ) {
 				return;
 			}
-			var col = index % cols;
-			var row = Math.floor( index / cols );
-			var x = cols > 1 ? ( col * 100 ) / ( cols - 1 ) : 0;
-			var y = rows > 1 ? ( row * 100 ) / ( rows - 1 ) : 0;
-
-			front.style.backgroundImage = 'url("' + url.replace( /"/g, '%22' ) + '")';
-			front.style.backgroundSize = cols * 100 + '% ' + rows * 100 + '%';
-			front.style.backgroundPosition = x.toFixed( 4 ) + '% ' + y.toFixed( 4 ) + '%';
+			// Bewusst das Türchen messen: die Klappe ist im offenen
+			// Zustand gedreht und hätte ein verzerrtes Rechteck.
+			var tile = door.getBoundingClientRect();
+			front.style.backgroundImage = url;
+			front.style.backgroundSize = size;
+			front.style.backgroundPosition =
+				Math.round( area.left + offsetX - tile.left ) + 'px ' +
+				Math.round( area.top + offsetY - tile.top ) + 'px';
 		} );
 	};
 

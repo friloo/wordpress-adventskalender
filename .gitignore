@@ -8,3 +8,4 @@ Thumbs.db
 /build/
 /dist/
 *.zip
+/tools/preview/

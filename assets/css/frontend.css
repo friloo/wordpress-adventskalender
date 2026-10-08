@@ -179,20 +179,22 @@ html.ak-no-scroll {
 }
 
 .ak-grid {
+	/* Auf dem Telefon bewusst drei Spalten: zwei machen den Kalender
+	   über 4000 px hoch, drei bleiben mit ~110 px gut antippbar. */
 	display: grid;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
+	grid-template-columns: repeat(3, minmax(0, 1fr));
 	gap: var(--ak-gap);
 	margin: 0;
 	padding: 0;
 	list-style: none;
 }
 
-@container (min-width: 420px) {
-	.ak-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@container (min-width: 480px) {
+	.ak-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 
-@container (min-width: 620px) {
-	.ak-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@container (min-width: 700px) {
+	.ak-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 }
 
 @container (min-width: 860px) {
@@ -201,8 +203,8 @@ html.ak-no-scroll {
 
 /* Rückfall für Browser ohne Container-Queries. */
 @supports not (container-type: inline-size) {
-	@media (min-width: 420px) { .ak-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-	@media (min-width: 620px) { .ak-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+	@media (min-width: 520px) { .ak-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+	@media (min-width: 740px) { .ak-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
 	@media (min-width: 900px) { .ak-grid { grid-template-columns: repeat(var(--ak-cols, 6), minmax(0, 1fr)); } }
 }
 
@@ -251,10 +253,14 @@ html.ak-no-scroll {
 .ak-door__inside {
 	position: absolute;
 	inset: 0;
+	z-index: 0;
 	display: flex;
 	align-items: flex-end;
 	overflow: hidden;
 	border-radius: inherit;
+	/* Eigener Stapelkontext: sonst konkurriert der z-index des
+	   Vorschautexts mit der Klappe und scheint durch sie hindurch. */
+	isolation: isolate;
 	background: var(--ak-inside);
 	box-shadow: inset 0 2px 14px rgba(0, 0, 0, .5);
 	color: var(--ak-inside-text);
@@ -325,6 +331,7 @@ html.ak-no-scroll {
 .ak-door__flap {
 	position: absolute;
 	inset: 0;
+	z-index: 1;
 	transform-style: preserve-3d;
 	transform-origin: left center;
 	transition: transform var(--ak-duration) var(--ak-ease), filter var(--ak-duration) var(--ak-ease);
@@ -441,7 +448,14 @@ html.ak-no-scroll {
 
 .ak-door.is-open .ak-door__flap {
 	transform: rotateY(-108deg);
-	filter: brightness(.86);
+}
+
+/* Kein filter/opacity auf der Klappe: beides erzwingt
+   transform-style: flat und hebt backface-visibility auf –
+   dann zeigt die geöffnete Klappe ihre gespiegelte Vorderseite.
+   Die Abdunklung sitzt deshalb auf der Rückseite selbst. */
+.ak-door.is-open .ak-door__back {
+	background: linear-gradient(155deg, #cfc7b8, #ada498);
 }
 
 .ak-door.is-open {
@@ -476,7 +490,7 @@ html.ak-no-scroll {
 	content: "";
 	position: absolute;
 	inset: 0;
-	z-index: 3;
+	z-index: 2;
 	display: block;
 	border-radius: inherit;
 	background: rgba(10, 16, 22, 0);
@@ -680,6 +694,15 @@ html.ak-no-scroll {
 	height: auto;
 	border-radius: 14px;
 	background: #f1f3f5;
+}
+
+/* Hochformatige Bilder dürfen die Lightbox nicht sprengen. */
+.ak-media__img {
+	max-height: min(58vh, 620px);
+	width: auto;
+	max-width: 100%;
+	margin-inline: auto;
+	object-fit: contain;
 }
 
 .ak-media__video {

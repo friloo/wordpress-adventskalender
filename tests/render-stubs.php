@@ -36,7 +36,13 @@ function wp_trim_words( $text, $num = 55, $more = '…' ) {
 }
 function wp_strip_all_tags( $t ) { return strip_tags( (string) $t ); }
 function strip_shortcodes( $t ) { return (string) $t; }
-function wp_get_attachment_image_url( $id, $size = 'thumbnail' ) { return 'https://example.test/wp-content/uploads/bild-' . (int) $id . '.jpg'; }
+$GLOBALS['ak_image_url_cb'] = null;
+function wp_get_attachment_image_url( $id, $size = 'thumbnail' ) {
+	if ( is_callable( $GLOBALS['ak_image_url_cb'] ) ) {
+		return call_user_func( $GLOBALS['ak_image_url_cb'], (int) $id, $size );
+	}
+	return 'https://example.test/wp-content/uploads/bild-' . (int) $id . '.jpg';
+}
 function wp_get_attachment_image( $id, $size = 'thumbnail', $icon = false, $attr = array() ) {
 	$class = isset( $attr['class'] ) ? $attr['class'] : '';
 	return sprintf( '<img src="%s" class="%s" alt="" />', wp_get_attachment_image_url( $id, $size ), htmlspecialchars( $class, ENT_QUOTES ) );

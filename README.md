@@ -112,6 +112,19 @@ Den Testmodus kann man direkt auf der Übersichtsseite ein- und ausschalten.
 
 GPL-2.0-or-later
 
+## Design-Vorschau ohne WordPress
+
+Um Layouts und Farbwelten zu beurteilen, ohne das Plugin zu installieren:
+
+```bash
+php tools/preview.php      # erzeugt tools/preview/*.html
+```
+
+Die Seiten rendern mit dem echten Renderer gegen die Test-Attrappen, mit
+lokal erzeugten SVG-Platzhaltern (es wird nichts nachgeladen). Enthalten
+sind alle drei Layouts, mehrere Farbwelten, der Testmodus und eine Variante
+mit Hintergrundbild.
+
 ## Tests
 
 Die Logik lässt sich ohne WordPress-Installation prüfen – gegen schlanke

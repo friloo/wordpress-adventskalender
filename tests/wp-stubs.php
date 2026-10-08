@@ -31,7 +31,8 @@ function wp_parse_args( $args, $defaults = array() ) { return array_merge( $defa
 function sanitize_text_field( $v ) { return trim( strip_tags( (string) $v ) ); }
 function wp_kses_post( $v ) { return (string) $v; }
 function esc_url_raw( $v ) { return (string) $v; }
-function get_post_type( $id ) { return in_array( (int) $id, array( 11, 12, 13 ), true ) ? 'attachment' : 'page'; }
+$GLOBALS['ak_attachment_ids'] = array( 11, 12, 13 );
+function get_post_type( $id ) { return in_array( (int) $id, $GLOBALS['ak_attachment_ids'], true ) ? 'attachment' : 'page'; }
 function is_user_logged_in() { return (bool) $GLOBALS['ak_logged_in']; }
 function current_user_can( $cap ) { return (bool) $GLOBALS['ak_user_can']; }
 function register_setting() {}
