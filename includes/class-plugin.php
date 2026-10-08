@@ -50,6 +50,9 @@ class Plugin {
 		add_action( 'admin_init', array( Settings::class, 'register' ) );
 		add_action( 'rest_api_init', array( Rest::class, 'register_routes' ) );
 
+		// Zweite Sperre für /wp/v2/ak_door – unabhängig vom eigenen Controller.
+		add_filter( 'rest_pre_dispatch', array( Rest::class, 'guard_door_routes' ), 10, 3 );
+
 		// Früh registrieren: der Block rendert serverseitig über die REST-API,
 		// wo "wp_enqueue_scripts" nie ausgelöst wird.
 		add_action( 'init', array( Renderer::class, 'register_assets' ), 5 );

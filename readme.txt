@@ -51,6 +51,10 @@ Entweder über die Redaktionsvorschau (du bist angemeldet und siehst alles) oder
 
 Ja. Der Kalender gleicht den Freischaltzustand beim Laden über eine nicht gecachte REST-Route ab.
 
+= Kann ich die Türchen mit dem Block-Editor bearbeiten? =
+
+Ja, das ist die Voreinstellung. Unter Einstellungen → Verhalten & Daten lässt sich auch der klassische Editor wählen. Für den Block-Editor meldet WordPress die Türchen an der REST-API an; das Plugin verriegelt diese Routen doppelt, sodass nur angemeldete Redakteure sie lesen können. Gesperrte Inhalte bleiben geschützt.
+
 = Kann ich die Farben an unser Corporate Design anpassen? =
 
 Ja. Wähle die Farbwelt „Markenfarbe" und trage den Hex-Wert eurer Primärfarbe ein. Die gesamte Palette wird daraus abgeleitet, inklusive Kontrastprüfung nach WCAG 2.1. Per Shortcode geht es auch direkt: `[adventskalender color="#0057B8"]`.

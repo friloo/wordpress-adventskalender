@@ -96,6 +96,42 @@ class Rest {
 	}
 
 	/**
+	 * Zweite Sperre für die Standard-Routen des Inhaltstyps.
+	 *
+	 * Der eigene Controller schützt bereits das Lesen von Liste und
+	 * Einzeleintrag. Dieser Filter deckt zusätzlich alle Unterrouten ab
+	 * (Revisionen, Autosaves) und bleibt wirksam, falls die Registrierung
+	 * des Controllers einmal nicht greift.
+	 *
+	 * @param mixed            $result  Vorberechnetes Ergebnis.
+	 * @param mixed            $server  REST-Server.
+	 * @param \WP_REST_Request $request Anfrage.
+	 * @return mixed
+	 */
+	public static function guard_door_routes( $result, $server, $request ) {
+		if ( null !== $result ) {
+			return $result;
+		}
+
+		$route = (string) $request->get_route();
+		$base  = '/wp/v2/' . Doors::REST_BASE;
+
+		if ( $route !== $base && 0 !== strpos( $route, $base . '/' ) ) {
+			return $result;
+		}
+
+		if ( current_user_can( Settings::manage_capability() ) ) {
+			return $result;
+		}
+
+		return new \WP_Error(
+			'adventskalender_rest_forbidden',
+			__( 'Türchen lassen sich über die REST-API nur von der Redaktion lesen.', 'adventskalender' ),
+			array( 'status' => rest_authorization_required_code() )
+		);
+	}
+
+	/**
 	 * Validiert einen Tageswert.
 	 *
 	 * @param mixed $value Rohwert.

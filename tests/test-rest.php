@@ -129,6 +129,74 @@ check( 'Redakteur darf Tag 24 laden', door( 24 ) instanceof WP_REST_Response );
 $GLOBALS['ak_logged_in'] = false; $GLOBALS['ak_user_can'] = false;
 check( 'Abgemeldeter darf nicht', door( 24 ) instanceof WP_Error );
 
+echo "\n== Block-Editor: Absicherung der Standardrouten ==\n";
+
+// Minimale Attrappe des WordPress-Controllers.
+class WP_REST_Posts_Controller {
+	protected $post_type;
+	public function __construct( $post_type = '' ) { $this->post_type = $post_type; }
+	public function get_items_permissions_check( $request ) { return true; }
+	public function get_item_permissions_check( $request ) { return true; }
+}
+function rest_authorization_required_code() { return is_user_logged_in() ? 403 : 401; }
+function is_wp_error( $thing ) { return $thing instanceof WP_Error; }
+
+require __DIR__ . '/../includes/class-doors-rest-controller.php';
+
+use Adventskalender\Doors_Rest_Controller;
+use Adventskalender\Doors;
+
+$controller = new Doors_Rest_Controller( Doors::POST_TYPE );
+$req        = new WP_REST_Request( array() );
+
+$GLOBALS['ak_logged_in'] = false; $GLOBALS['ak_user_can'] = false;
+check( 'Liste: abgemeldet verweigert', $controller->get_items_permissions_check( $req ) instanceof WP_Error );
+check( 'Einzeln: abgemeldet verweigert', $controller->get_item_permissions_check( $req ) instanceof WP_Error );
+check( 'Status 401 für Abgemeldete', 401 === $controller->get_items_permissions_check( $req )->get_error_data()['status'] );
+
+$GLOBALS['ak_logged_in'] = true; $GLOBALS['ak_user_can'] = false;
+check( 'Angemeldet ohne Rechte verweigert', $controller->get_items_permissions_check( $req ) instanceof WP_Error );
+check( 'Status 403 für Angemeldete', 403 === $controller->get_items_permissions_check( $req )->get_error_data()['status'] );
+
+$GLOBALS['ak_user_can'] = true;
+check( 'Redaktion darf Liste lesen', true === $controller->get_items_permissions_check( $req ) );
+check( 'Redaktion darf Einzeleintrag lesen', true === $controller->get_item_permissions_check( $req ) );
+$GLOBALS['ak_logged_in'] = false; $GLOBALS['ak_user_can'] = false;
+
+echo "\n== Zweite Sperre (rest_pre_dispatch) ==\n";
+
+class AK_Route_Request extends WP_REST_Request {
+	private $route;
+	public function __construct( $route ) { parent::__construct( array() ); $this->route = $route; }
+	public function get_route() { return $this->route; }
+}
+
+$guard = function ( $route ) { return Rest::guard_door_routes( null, null, new AK_Route_Request( $route ) ); };
+
+check( 'Türchen-Liste gesperrt',        $guard( '/wp/v2/ak_door' ) instanceof WP_Error );
+check( 'Einzelnes Türchen gesperrt',    $guard( '/wp/v2/ak_door/123' ) instanceof WP_Error );
+check( 'Revisionen gesperrt',           $guard( '/wp/v2/ak_door/123/revisions' ) instanceof WP_Error );
+check( 'Autosaves gesperrt',            $guard( '/wp/v2/ak_door/123/autosaves' ) instanceof WP_Error );
+check( 'Beiträge nicht betroffen',      null === $guard( '/wp/v2/posts' ) );
+check( 'Medien nicht betroffen',        null === $guard( '/wp/v2/media' ) );
+check( 'ähnlicher Name nicht betroffen', null === $guard( '/wp/v2/ak_doors_public' ) );
+check( 'eigene Route nicht betroffen',  null === $guard( '/adventskalender/v1/state' ) );
+
+$GLOBALS['ak_user_can'] = true;
+check( 'Redaktion kommt durch', null === $guard( '/wp/v2/ak_door' ) );
+$GLOBALS['ak_user_can'] = false;
+
+// Vorberechnetes Ergebnis darf nicht überschrieben werden.
+$vorher = new WP_REST_Response( array( 'x' => 1 ), 200 );
+check( 'vorhandenes Ergebnis bleibt', $vorher === Rest::guard_door_routes( $vorher, null, new AK_Route_Request( '/wp/v2/ak_door' ) ) );
+
+echo "\n== Editorwahl entscheidet über die REST-Anmeldung ==\n";
+update_option( Settings::OPTION, array_merge( Settings::get(), array( 'editor' => 'classic' ) ) );
+check( 'klassischer Editor: kein REST', false === Doors::uses_block_editor() );
+update_option( Settings::OPTION, array_merge( Settings::get(), array( 'editor' => 'block' ) ) );
+check( 'Block-Editor: REST aktiv', true === Doors::uses_block_editor() );
+check( 'ungültiger Wert -> Voreinstellung', 'block' === Settings::sanitize( array( 'editor' => 'quatsch' ) )['editor'] );
+
 echo "\n== Routenregistrierung und Berechtigungen ==\n";
 $GLOBALS['ak_routes'] = array();
 function register_rest_route( $namespace, $route, $args = array() ) {

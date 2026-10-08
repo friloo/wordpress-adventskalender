@@ -105,6 +105,9 @@ $GLOBALS['ak_meta'][109]['_ak_media_type'] = 'none';
 update_option( Settings::OPTION, array_merge( Settings::defaults(), array(
 	'year' => 2026, 'door_count' => 24, 'columns' => 6, 'layout' => 'mosaic',
 	'theme' => 'brand', 'brand_color' => '#0057b8', 'brand_scheme' => 'light',
+	// Das Gerüst bildet den klassischen Editor nach; Gutenberg lässt sich
+	// ohne WordPress-Installation nicht sinnvoll nachstellen.
+	'editor' => 'classic',
 	'mosaic_image' => 7, 'heading' => 'Unser Adventskalender',
 	'intro' => 'Jeden Tag ein kleines Stück Vorfreude.',
 ) ) );
@@ -129,6 +132,28 @@ function fresh_color_scheme(): string {
 #wpadminbar { background: #1d2327; color: #f0f0f1; }
 .wp-core-ui .button-primary { background: #2271b1; border-color: #2271b1; color: #fff; }
 .wp-core-ui .button-primary:hover { background: #135e96; border-color: #135e96; }
+
+/* Angekreuzte Felder: forms.css zeichnet ein weißes Häkchen, die blaue
+   Füllung kommt aus dem Farbschema. Ohne sie bleibt der Haken unsichtbar. */
+.wp-core-ui input[type="checkbox"]:checked,
+.wp-core-ui input[type="radio"]:checked {
+	background: #3582c4;
+	border-color: #3582c4;
+}
+.wp-core-ui input[type="radio"]:checked::before {
+	content: "";
+	display: block;
+	width: 6px;
+	height: 6px;
+	margin: 4px;
+	border-radius: 50%;
+	background-color: #fff;
+}
+.wp-core-ui input[type="checkbox"]:focus,
+.wp-core-ui input[type="radio"]:focus {
+	border-color: #3582c4;
+	box-shadow: 0 0 0 1px #3582c4;
+}
 CSS;
 }
 

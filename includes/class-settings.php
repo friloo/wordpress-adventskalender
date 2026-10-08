@@ -51,6 +51,33 @@ class Settings {
 	}
 
 	/**
+	 * Benötigte Berechtigung für die Türchen-Verwaltung.
+	 *
+	 * Bewusst hier und nicht in der Adminklasse: auch der REST-Controller
+	 * fragt sie ab, und der läuft ohne Adminoberfläche.
+	 */
+	public static function manage_capability(): string {
+		/**
+		 * Filtert die Capability zur Verwaltung der Türchen.
+		 *
+		 * @param string $capability Capability.
+		 */
+		return (string) apply_filters( 'adventskalender_manage_capability', 'edit_posts' );
+	}
+
+	/**
+	 * Verfügbare Editoren für die Türchen-Bearbeitung.
+	 *
+	 * @return array<string,string>
+	 */
+	public static function editors(): array {
+		return array(
+			'block'   => __( 'Block-Editor (Gutenberg) – Bilder, Galerien und Spalten als Blöcke', 'adventskalender' ),
+			'classic' => __( 'Klassischer Editor – alle Felder des Plugins auf einen Blick', 'adventskalender' ),
+		);
+	}
+
+	/**
 	 * Standardwerte aller Optionen.
 	 *
 	 * @return array<string,mixed>
@@ -64,6 +91,7 @@ class Settings {
 			'theme'             => 'nordic',
 			'brand_color'       => '#1f5f46',
 			'brand_scheme'      => 'light',
+			'editor'            => 'block',
 			'columns'           => 6,
 			'shuffle'           => 1,
 			'shuffle_seed'      => 1,
@@ -169,6 +197,10 @@ class Settings {
 		foreach ( array( 'mosaic_image', 'background_image' ) as $media_key ) {
 			$out[ $media_key ] = isset( $input[ $media_key ] ) ? self::sanitize_attachment_id( $input[ $media_key ] ) : 0;
 		}
+
+		$out['editor'] = isset( $input['editor'] ) && array_key_exists( $input['editor'], self::editors() )
+			? $input['editor']
+			: $defaults['editor'];
 
 		// Markenfarbe: nur gültige Hex-Werte, sonst der bisherige Wert.
 		$out['brand_color'] = isset( $input['brand_color'] )

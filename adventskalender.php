@@ -43,6 +43,7 @@ function plugin_url_base(): string {
 require_once __DIR__ . '/includes/class-color.php';
 require_once __DIR__ . '/includes/class-settings.php';
 require_once __DIR__ . '/includes/class-doors.php';
+require_once __DIR__ . '/includes/class-doors-rest-controller.php';
 require_once __DIR__ . '/includes/class-availability.php';
 require_once __DIR__ . '/includes/class-content.php';
 require_once __DIR__ . '/includes/class-renderer.php';

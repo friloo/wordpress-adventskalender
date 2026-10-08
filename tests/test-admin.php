@@ -44,8 +44,24 @@ class AK_Fake_WPDB {
 }
 $GLOBALS['wpdb'] = new AK_Fake_WPDB();
 
+// Der Block-Editor wird nur angeboten, wenn der abgeschottete
+// REST-Controller geladen ist (bewusst fail-closed).
+class WP_REST_Posts_Controller {
+	public function __construct( $post_type = '' ) {}
+	public function get_items_permissions_check( $request ) { return true; }
+	public function get_item_permissions_check( $request ) { return true; }
+}
+function rest_authorization_required_code() { return 403; }
+function is_wp_error( $thing ) { return $thing instanceof WP_Error; }
+class WP_Error {
+	public $c; public $d;
+	public function __construct( $c = '', $m = '', $d = array() ) { $this->c = $c; $this->d = $d; }
+	public function get_error_data() { return $this->d; }
+}
+
 $base = __DIR__ . '/../includes/';
 require_once $base . 'class-availability.php';
+require_once $base . 'class-doors-rest-controller.php';
 require_once $base . 'class-admin.php';
 require_once $base . 'class-metabox.php';
 
@@ -196,6 +212,8 @@ check( 'Farbmuster gelistet', 6 === substr_count( $r['html'], 'ak-brand-swatches
 check( 'Kontrastliste gelistet', 5 === substr_count( $r['html'], 'ak-brand-contrast__ratio' ) );
 check( 'alle Kontraste bestehen', 5 === substr_count( $r['html'], 'class="is-ok"' ) );
 check( 'Markenfelder sind markiert', 3 === substr_count( $r['html'], 'data-ak-when-theme="brand"' ) );
+check( 'Editorwahl angeboten', 2 === substr_count( $r['html'], 'name="adventskalender_settings[editor]"' ) );
+check( 'Hinweis zur REST-Absicherung', false !== strpos( $r['html'], 'verriegelt diese Routen' ) );
 
 // Auch eine schwierige Farbe darf keine Warnung produzieren.
 update_option( Settings::OPTION, array_merge( Settings::get(), array( 'brand_color' => '#ffe000' ) ) );
@@ -222,6 +240,32 @@ $r = render( function () use ( $post ) { Metabox::render_media( $post ); } );
 check( 'alle Medientypen angeboten', 4 === substr_count( $r['html'], 'name="ak_media_type"' ) );
 check( 'Videoquellen angeboten', 2 === substr_count( $r['html'], 'name="ak_video_source"' ) );
 check( 'Lightbox-Layouts angeboten', 4 === substr_count( $r['html'], '<option value="media_top"' ) + substr_count( $r['html'], '<option value="media_side"' ) + substr_count( $r['html'], '<option value="media_only"' ) + substr_count( $r['html'], '<option value="text_only"' ) );
+
+echo "\n== Editorwahl wirkt auf die Bearbeitungsmaske ==\n";
+
+$GLOBALS['ak_boxes'] = array();
+function add_meta_box( $id, $title, $cb, $screen = null, $context = 'advanced', $priority = 'default' ) {
+	$GLOBALS['ak_boxes'][ $id ] = array( 'context' => $context, 'priority' => $priority );
+}
+
+update_option( Settings::OPTION, array_merge( Settings::get(), array( 'editor' => 'classic' ) ) );
+$GLOBALS['ak_boxes'] = array();
+Metabox::register();
+check( 'klassisch: keine Hinweis-Metabox', ! isset( $GLOBALS['ak_boxes']['ak_hint'] ) );
+check( 'klassisch: Hinweis über dem Editor', '' !== render( function () use ( $post ) { Metabox::editor_hint( $post ); } )['html'] );
+check( 'klassisch: Felder sind da', isset( $GLOBALS['ak_boxes']['ak_schedule'], $GLOBALS['ak_boxes']['ak_media'], $GLOBALS['ak_boxes']['ak_preview'] ) );
+$hint_classic = Metabox::hint_text();
+
+update_option( Settings::OPTION, array_merge( Settings::get(), array( 'editor' => 'block' ) ) );
+$GLOBALS['ak_boxes'] = array();
+Metabox::register();
+check( 'Block-Editor: Hinweis als Metabox', isset( $GLOBALS['ak_boxes']['ak_hint'] ) );
+check( 'Hinweis steht oben',  'normal' === $GLOBALS['ak_boxes']['ak_hint']['context'] && 'high' === $GLOBALS['ak_boxes']['ak_hint']['priority'] );
+check( 'Block-Editor: kein Hinweis über dem Editor', '' === trim( render( function () use ( $post ) { Metabox::editor_hint( $post ); } )['html'] ) );
+check( 'Hinweistext passt zum Editor', $hint_classic !== Metabox::hint_text() );
+check( 'Block-Hinweis nennt den Bild-Block', false !== strpos( Metabox::hint_text(), 'Bild-Block' ) );
+check( 'klassischer Hinweis nennt Dateien hinzufügen', false !== strpos( $hint_classic, 'Dateien hinzufügen' ) );
+update_option( Settings::OPTION, array_merge( Settings::get(), array( 'editor' => 'block' ) ) );
 
 echo "\n== Listenspalten ==\n";
 $cols = Admin::columns( array( 'cb' => '', 'title' => 'Titel', 'date' => 'Datum' ) );

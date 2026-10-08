@@ -46,7 +46,18 @@ class Metabox {
 	}
 
 	/**
-	 * Kurzer Hinweis über dem Editor.
+	 * Hinweistext zum Aufbau eines Türchens.
+	 */
+	public static function hint_text(): string {
+		return Doors::uses_block_editor()
+			? __( 'Weitere Bilder fügst du als Bild-Block direkt in den Text ein – mit der Ausrichtung links oder rechts wird der Text darum herum gesetzt. Das Titelbild, die Vorschau und das Zeitfenster stellst du in den Feldern unterhalb bzw. seitlich ein.', 'adventskalender' )
+			: __( 'Weitere Bilder fügst du mit „Dateien hinzufügen“ direkt in den Text ein – sie lassen sich links oder rechts umfließen und mit einer Bildunterschrift versehen. Das Titelbild, die Vorschau und das Zeitfenster stellst du rechts bzw. unten ein.', 'adventskalender' );
+	}
+
+	/**
+	 * Kurzer Hinweis über dem Editor (nur klassischer Editor – im
+	 * Block-Editor gibt es diesen Hook nicht, dort übernimmt eine eigene
+	 * Metabox).
 	 *
 	 * @param \WP_Post $post Beitrag.
 	 */
@@ -55,9 +66,23 @@ class Metabox {
 			return;
 		}
 
+		if ( Doors::uses_block_editor() ) {
+			return;
+		}
+
 		echo '<p class="ak-editor-hint">'
 			. '<strong>' . esc_html__( 'Hier schreibst du den Bericht.', 'adventskalender' ) . '</strong> '
-			. esc_html__( 'Weitere Bilder fügst du mit „Dateien hinzufügen“ direkt in den Text ein – sie lassen sich links oder rechts umfließen und mit einer Bildunterschrift versehen. Das Titelbild, die Vorschau und das Zeitfenster stellst du rechts bzw. unten ein.', 'adventskalender' )
+			. esc_html( self::hint_text() )
+			. '</p>';
+	}
+
+	/**
+	 * Dieselbe Hilfe als Metabox, direkt unter dem Block-Editor.
+	 */
+	public static function render_hint(): void {
+		echo '<p class="ak-editor-hint ak-editor-hint--box">'
+			. '<strong>' . esc_html__( 'Hier schreibst du den Bericht.', 'adventskalender' ) . '</strong> '
+			. esc_html( self::hint_text() )
 			. '</p>';
 	}
 
@@ -65,6 +90,17 @@ class Metabox {
 	 * Registriert die Metaboxen.
 	 */
 	public static function register(): void {
+		if ( Doors::uses_block_editor() ) {
+			add_meta_box(
+				'ak_hint',
+				__( 'So ist ein Türchen aufgebaut', 'adventskalender' ),
+				array( __CLASS__, 'render_hint' ),
+				Doors::POST_TYPE,
+				'normal',
+				'high'
+			);
+		}
+
 		add_meta_box(
 			'ak_schedule',
 			__( 'Zeitfenster', 'adventskalender' ),

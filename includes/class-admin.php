@@ -43,22 +43,10 @@ class Admin {
 	}
 
 	/**
-	 * Benötigte Berechtigung für die Türchen-Verwaltung.
-	 */
-	public static function manage_capability(): string {
-		/**
-		 * Filtert die Capability zur Verwaltung der Türchen.
-		 *
-		 * @param string $capability Capability.
-		 */
-		return (string) apply_filters( 'adventskalender_manage_capability', 'edit_posts' );
-	}
-
-	/**
 	 * Registriert Menü und Untermenüs.
 	 */
 	public static function register_menu(): void {
-		$cap = self::manage_capability();
+		$cap = Settings::manage_capability();
 
 		add_menu_page(
 			__( 'Adventskalender', 'adventskalender' ),
@@ -244,7 +232,7 @@ class Admin {
 	 * Rendert die Übersichtsseite.
 	 */
 	public static function render_overview(): void {
-		if ( ! current_user_can( self::manage_capability() ) ) {
+		if ( ! current_user_can( Settings::manage_capability() ) ) {
 			wp_die( esc_html__( 'Du hast keine Berechtigung für diese Seite.', 'adventskalender' ) );
 		}
 
@@ -482,7 +470,7 @@ class Admin {
 	 * Legt fehlende Türchen als Entwurf an.
 	 */
 	public static function handle_create_missing(): void {
-		if ( ! current_user_can( self::manage_capability() ) ) {
+		if ( ! current_user_can( Settings::manage_capability() ) ) {
 			wp_die( esc_html__( 'Du hast keine Berechtigung für diese Aktion.', 'adventskalender' ), '', array( 'response' => 403 ) );
 		}
 
@@ -942,6 +930,28 @@ class Admin {
 				<div class="ak-panel">
 					<h2><?php esc_html_e( 'Verhalten & Daten', 'adventskalender' ); ?></h2>
 					<table class="form-table" role="presentation">
+						<tr>
+							<th scope="row"><?php esc_html_e( 'Editor für Türchen', 'adventskalender' ); ?></th>
+							<td>
+								<fieldset>
+									<legend class="screen-reader-text"><?php esc_html_e( 'Editor wählen', 'adventskalender' ); ?></legend>
+									<?php foreach ( Settings::editors() as $key => $label ) : ?>
+										<p>
+											<label>
+												<input type="radio" name="<?php echo esc_attr( $name ); ?>[editor]" value="<?php echo esc_attr( $key ); ?>" <?php checked( $key, $s['editor'] ); ?> />
+												<?php echo esc_html( $label ); ?>
+											</label>
+										</p>
+									<?php endforeach; ?>
+								</fieldset>
+								<p class="description">
+									<?php esc_html_e( 'Der Block-Editor ist komfortabler für Berichte mit Bildern im Text. Die Felder des Plugins (Zeitfenster, Medium, Vorschau) stehen dort unterhalb des Editors statt daneben.', 'adventskalender' ); ?>
+								</p>
+								<p class="description">
+									<?php esc_html_e( 'Hinweis: Für den Block-Editor meldet WordPress die Türchen an der REST-API an. Das Plugin verriegelt diese Routen so, dass nur angemeldete Redakteure sie lesen können – gesperrte Inhalte bleiben geschützt.', 'adventskalender' ); ?>
+								</p>
+							</td>
+						</tr>
 						<tr>
 							<th scope="row"><?php esc_html_e( 'Geöffnete Türchen merken', 'adventskalender' ); ?></th>
 							<td>

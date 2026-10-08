@@ -46,6 +46,11 @@ class Doors {
 	const DEFAULT_LAYOUT = 'report';
 
 	/**
+	 * Basis der REST-Route, wenn der Block-Editor aktiv ist.
+	 */
+	const REST_BASE = 'ak_door';
+
+	/**
 	 * Inhalts-Layouts innerhalb der Lightbox.
 	 *
 	 * @return array<string,string>
@@ -87,9 +92,27 @@ class Doors {
 	}
 
 	/**
+	 * Soll der Block-Editor verwendet werden?
+	 *
+	 * Er setzt voraus, dass der Inhaltstyp in der REST-API registriert ist.
+	 * Das geschieht nur zusammen mit dem abgeschotteten Controller – fehlt
+	 * der, bleibt es beim klassischen Editor, statt die Türchen ungeschützt
+	 * auszuliefern.
+	 */
+	public static function uses_block_editor(): bool {
+		if ( 'block' !== Settings::get( 'editor' ) ) {
+			return false;
+		}
+
+		return class_exists( __NAMESPACE__ . '\\Doors_Rest_Controller' );
+	}
+
+	/**
 	 * Registriert den Post Type.
 	 */
 	public static function register_post_type(): void {
+		$block_editor = self::uses_block_editor();
+
 		register_post_type(
 			self::POST_TYPE,
 			array(
@@ -113,7 +136,11 @@ class Doors {
 				'show_ui'             => true,
 				'show_in_menu'        => false,
 				'show_in_nav_menus'   => false,
-				'show_in_rest'        => false,
+				// Nur für den Block-Editor – und dann ausschließlich mit
+				// dem abgeschotteten Controller (siehe oben).
+				'show_in_rest'           => $block_editor,
+				'rest_base'              => self::REST_BASE,
+				'rest_controller_class'  => $block_editor ? Doors_Rest_Controller::class : \WP_REST_Posts_Controller::class,
 				'hierarchical'        => false,
 				'has_archive'         => false,
 				'rewrite'             => false,

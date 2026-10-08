@@ -124,9 +124,33 @@ ein Text, und im Text weitere Bilder.
 4. **Anordnung** steht auf *Bericht*; andere Varianten (Medium links,
    nur Text, nur Medium) lassen sich im selben Kasten wählen.
 
-Sowohl der klassische Editor als auch Block-Inhalte werden unterstützt –
-Bild-, Galerie-, Spalten-, Medien-und-Text-, Zitat- und Button-Blöcke sind
-gestaltet.
+### Block-Editor oder klassischer Editor
+
+Unter **Einstellungen → Verhalten & Daten → Editor für Türchen** lässt sich
+beides wählen:
+
+* **Block-Editor (Gutenberg)** – Voreinstellung. Bequemer für Berichte mit
+  Bildern im Text. Die Plugin-Felder (Zeitfenster, Titelbild, Vorschau)
+  stehen unterhalb des Editors statt daneben.
+* **Klassischer Editor** – alle Felder des Plugins auf einen Blick,
+  zweispaltig.
+
+Bild-, Galerie-, Spalten-, Medien-und-Text-, Zitat-, Trenner- und
+Button-Blöcke sind gestaltet; der klassische Editor funktioniert
+gleichwertig.
+
+**Zur Sicherheit:** Für den Block-Editor muss WordPress die Türchen an der
+REST-API anmelden – sonst wären unter `/wp-json/wp/v2/ak_door` alle
+veröffentlichten Türchen öffentlich lesbar, auch die noch gesperrten. Das
+Plugin verriegelt diese Routen doppelt:
+
+1. ein eigener REST-Controller, der für jeden lesenden Zugriff die
+   Redaktionsberechtigung verlangt,
+2. ein davon unabhängiger Filter auf `rest_pre_dispatch`, der auch
+   Unterrouten (Revisionen, Autosaves) abdeckt.
+
+Lässt sich der Controller nicht laden, bleibt es beim klassischen Editor,
+statt die Türchen ungeschützt auszuliefern.
 
 ## Türchen pflegen
 
@@ -163,6 +187,9 @@ Den Testmodus kann man direkt auf der Übersichtsseite ein- und ausschalten.
   `wp_http_validate_url` für URLs, `wp_kses_post` für HTML).
 * Alle Ausgaben werden escaped; Medien-IDs werden gegen die Mediathek geprüft.
 * Keine direkten SQL-Queries außer einer `$wpdb->prepare`-Abfrage für die Jahresliste.
+* Mit dem Block-Editor sind die Standard-REST-Routen des Inhaltstyps doppelt
+  verriegelt (eigener Controller und `rest_pre_dispatch`-Filter); ohne ihn
+  ist der Inhaltstyp gar nicht erst an der REST-API angemeldet.
 * `localStorage` statt Cookies für geöffnete Türchen – keine personenbezogenen Daten.
 
 ## Filter für Entwickler
@@ -176,7 +203,7 @@ Den Testmodus kann man direkt auf der Übersichtsseite ein- und ausschalten.
 | `adventskalender_date_format`         | Datumsformat der Hinweise                  |
 | `adventskalender_door_payload`        | Daten eines Türchens anpassen              |
 | `adventskalender_door_html`           | Lightbox-Markup anpassen                   |
-| `adventskalender_manage_capability`   | Capability der Türchen-Verwaltung          |
+| `adventskalender_manage_capability`   | Capability der Türchen-Verwaltung und der REST-Sperre |
 
 ## Lizenz
 
