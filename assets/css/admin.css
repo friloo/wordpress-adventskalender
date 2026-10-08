@@ -1,0 +1,565 @@
+/* Adventskalender – Administrationsoberfläche */
+
+.ak-admin__title {
+	display: flex;
+	align-items: center;
+	gap: .6em;
+}
+
+.ak-admin__year-badge {
+	padding: .2em .7em;
+	border-radius: 999px;
+	background: #1d2733;
+	color: #fff;
+	font-size: .62em;
+	font-weight: 600;
+	letter-spacing: .04em;
+	vertical-align: middle;
+}
+
+.ak-admin__bar {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 14px;
+	align-items: center;
+	justify-content: space-between;
+	margin: 16px 0 10px;
+}
+
+.ak-admin__yearform,
+.ak-admin__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: center;
+	margin: 0;
+}
+
+.ak-admin__yearform form,
+.ak-admin__actions form {
+	margin: 0;
+}
+
+/* ----------------------------------------------------------- Kennzahlen */
+
+.ak-admin__stats {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+	gap: 12px;
+	margin: 0 0 18px;
+}
+
+.ak-stat {
+	padding: 14px 16px;
+	border: 1px solid #dcdfe4;
+	border-radius: 10px;
+	background: #fff;
+	box-shadow: 0 1px 2px rgba(16, 24, 32, .04);
+}
+
+.ak-stat.is-warning {
+	border-color: #f0c36d;
+	background: #fffaf0;
+}
+
+.ak-stat.is-active {
+	border-color: #d26b4f;
+	background: #fff3ef;
+}
+
+.ak-stat__value {
+	display: block;
+	font-size: 1.6rem;
+	font-weight: 600;
+	line-height: 1.1;
+	color: #1d2733;
+}
+
+.ak-stat__label {
+	display: block;
+	margin-top: 4px;
+	color: #646970;
+	font-size: .82rem;
+	line-height: 1.4;
+}
+
+.ak-stat__toggle {
+	display: inline;
+	margin-left: .35em;
+}
+
+.ak-stat__toggle .button-link {
+	color: #2271b1;
+	text-decoration: underline;
+}
+
+/* ------------------------------------------------------------- Shortcode */
+
+.ak-admin__shortcode {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: center;
+	margin: 0 0 20px;
+	padding: 12px 16px;
+	border: 1px solid #dcdfe4;
+	border-left: 4px solid #2271b1;
+	border-radius: 8px;
+	background: #fff;
+}
+
+.ak-admin__shortcode label {
+	font-weight: 600;
+}
+
+.ak-admin__code {
+	min-width: 220px;
+	font-family: Consolas, Monaco, monospace;
+	background: #f6f7f7;
+}
+
+.ak-admin__shortcode .description {
+	flex: 1 1 100%;
+	margin: 4px 0 0;
+}
+
+/* --------------------------------------------------------- Türchen-Karten */
+
+.ak-admin__grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+	gap: 14px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	counter-reset: none;
+}
+
+.ak-card {
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	border: 1px solid #dcdfe4;
+	border-radius: 12px;
+	background: #fff;
+	box-shadow: 0 1px 2px rgba(16, 24, 32, .05);
+	transition: box-shadow 160ms ease, transform 160ms ease;
+}
+
+.ak-card:hover {
+	box-shadow: 0 6px 18px -8px rgba(16, 24, 32, .28);
+	transform: translateY(-1px);
+}
+
+.ak-card.is-missing {
+	border-style: dashed;
+	background: #fafbfc;
+}
+
+.ak-card.is-draft  { border-left: 4px solid #dba617; }
+.ak-card.is-empty  { border-left: 4px solid #cc5d4d; }
+.ak-card.is-ready  { border-left: 4px solid #2a9d5c; }
+.ak-card.is-today  { outline: 2px solid #2271b1; outline-offset: 1px; }
+
+.ak-card__head {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: baseline;
+	padding: 12px 14px 8px;
+}
+
+.ak-card__day {
+	font-size: 1.5rem;
+	font-weight: 700;
+	line-height: 1;
+	color: #1d2733;
+}
+
+.ak-card__date {
+	color: #646970;
+	font-size: .78rem;
+}
+
+.ak-card__badge--today {
+	margin-left: auto;
+	padding: .14em .6em;
+	border-radius: 999px;
+	background: #2271b1;
+	color: #fff;
+	font-size: .68rem;
+	font-weight: 600;
+	text-transform: uppercase;
+}
+
+.ak-card__thumb {
+	aspect-ratio: 16 / 9;
+	overflow: hidden;
+	background: #eef0f2;
+}
+
+.ak-card__thumb img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.ak-card__body {
+	flex: 1 1 auto;
+	padding: 10px 14px;
+}
+
+.ak-card__title {
+	margin: 0 0 4px;
+	font-weight: 600;
+	line-height: 1.35;
+	overflow-wrap: anywhere;
+}
+
+.ak-card__title--muted {
+	color: #8c8f94;
+	font-weight: 400;
+	font-style: italic;
+}
+
+.ak-card__meta {
+	margin: 0 0 8px;
+	color: #646970;
+	font-size: .8rem;
+}
+
+.ak-card__status {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 5px;
+	margin: 0;
+}
+
+.ak-card__foot {
+	padding: 0 14px 14px;
+}
+
+.ak-pill {
+	display: inline-block;
+	padding: .18em .62em;
+	border-radius: 999px;
+	font-size: .72rem;
+	font-weight: 600;
+	line-height: 1.5;
+	white-space: nowrap;
+}
+
+.ak-pill--ready   { background: #e3f4e9; color: #1b6b3c; }
+.ak-pill--draft   { background: #fdf3dc; color: #7a5600; }
+.ak-pill--empty   { background: #fdeceb; color: #8a2a1d; }
+.ak-pill--missing { background: #eef0f2; color: #5a6069; }
+.ak-pill--open    { background: #e4eefb; color: #1b4b80; }
+.ak-pill--closed  { background: #f1f2f4; color: #5a6069; }
+
+.ak-col-day {
+	font-size: 1.05em;
+}
+
+.ak-col-warn {
+	color: #b32d2e;
+}
+
+/* ------------------------------------------------------------- Panels */
+
+.ak-panel {
+	margin: 0 0 20px;
+	padding: 4px 20px 10px;
+	border: 1px solid #dcdfe4;
+	border-radius: 12px;
+	background: #fff;
+}
+
+.ak-panel > h2 {
+	margin: 16px 0 0;
+	padding-bottom: 10px;
+	border-bottom: 1px solid #eef0f2;
+	font-size: 1.05rem;
+}
+
+.ak-panel--test {
+	border-left: 4px solid #dba617;
+}
+
+.ak-description--warning {
+	color: #8a5a00;
+}
+
+.ak-switch {
+	display: inline-flex;
+	gap: .5em;
+	align-items: center;
+	padding: .35em .8em .35em .5em;
+	border-radius: 999px;
+	background: #f6f7f7;
+	font-weight: 600;
+}
+
+/* -------------------------------------------------------- Layout-Auswahl */
+
+.ak-radio-cards {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+	gap: 12px;
+	max-width: 760px;
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+.ak-radio-card {
+	display: block;
+	padding: 12px;
+	border: 2px solid #dcdfe4;
+	border-radius: 10px;
+	background: #fff;
+	cursor: pointer;
+	transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.ak-radio-card:hover {
+	border-color: #a7aaad;
+}
+
+.ak-radio-card:has(input:checked) {
+	border-color: #2271b1;
+	box-shadow: 0 0 0 1px #2271b1;
+}
+
+.ak-radio-card:has(input:focus-visible) {
+	outline: 2px solid #2271b1;
+	outline-offset: 2px;
+}
+
+.ak-radio-card input {
+	margin: 0 6px 0 0;
+}
+
+.ak-radio-card__preview {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 3px;
+	height: 54px;
+	margin: 8px 0;
+	border-radius: 6px;
+	overflow: hidden;
+}
+
+.ak-radio-card__preview::before,
+.ak-radio-card__preview::after {
+	content: "";
+}
+
+.ak-radio-card__preview--classic {
+	background:
+		repeating-linear-gradient(90deg, #17492f 0 32%, transparent 32% 34%),
+		repeating-linear-gradient(0deg, #17492f 0 48%, transparent 48% 52%);
+	background-color: #d9e3dd;
+}
+
+.ak-radio-card__preview--mosaic {
+	background-image: linear-gradient(120deg, #2f6f8f, #86b7c9 45%, #e8d6a8);
+	box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .6);
+}
+
+.ak-radio-card__preview--individual {
+	background:
+		linear-gradient(135deg, #b85c4c 50%, transparent 50%),
+		linear-gradient(135deg, #2f6f55 50%, transparent 50%) 50% 0 / 34% 100% no-repeat,
+		linear-gradient(135deg, #3f5f8f 50%, transparent 50%) 100% 0 / 33% 100% no-repeat;
+	background-color: #e5e7ea;
+}
+
+.ak-radio-card__label {
+	display: block;
+	font-size: .86rem;
+	line-height: 1.4;
+}
+
+/* ------------------------------------------------------- Medienfelder */
+
+.ak-media-field {
+	max-width: 420px;
+}
+
+.ak-media-field__preview:not(:empty) {
+	display: inline-block;
+	max-width: 240px;
+	margin: 0 0 8px;
+	padding: 4px;
+	border: 1px solid #dcdfe4;
+	border-radius: 8px;
+	background: #fff;
+}
+
+.ak-media-field__preview img {
+	display: block;
+	max-width: 100%;
+	height: auto;
+	border-radius: 5px;
+}
+
+.ak-media-field__filename {
+	display: block;
+	padding: 6px 10px;
+	font-family: Consolas, Monaco, monospace;
+	font-size: .8rem;
+	overflow-wrap: anywhere;
+}
+
+.ak-media-field__buttons {
+	display: flex;
+	gap: 10px;
+	align-items: center;
+	margin: 0;
+}
+
+.ak-media-field__remove {
+	color: #b32d2e;
+}
+
+/* ------------------------------------------------------- Galeriefeld */
+
+.ak-gallery-field__list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin: 0 0 10px;
+	padding: 0;
+	list-style: none;
+}
+
+.ak-gallery-field__list:empty {
+	display: none;
+}
+
+.ak-gallery-field__list li {
+	position: relative;
+	margin: 0;
+	border: 1px solid #dcdfe4;
+	border-radius: 8px;
+	overflow: hidden;
+	line-height: 0;
+}
+
+.ak-gallery-field__list img {
+	display: block;
+	width: 74px;
+	height: 74px;
+	object-fit: cover;
+}
+
+.ak-gallery-field__remove {
+	position: absolute;
+	top: 2px;
+	right: 2px;
+	width: 20px;
+	height: 20px;
+	padding: 0;
+	border: 0;
+	border-radius: 50%;
+	background: rgba(20, 26, 33, .76);
+	color: #fff;
+	font-size: 14px;
+	line-height: 18px;
+	cursor: pointer;
+}
+
+.ak-gallery-field__remove:hover {
+	background: #b32d2e;
+}
+
+/* ------------------------------------------------- Türchen-Bearbeitung */
+
+.ak-editor-hint {
+	margin: 8px 0 4px;
+	padding: 10px 14px;
+	border-left: 4px solid #2271b1;
+	border-radius: 6px;
+	background: #f0f6fc;
+	color: #1d2733;
+}
+
+.ak-fields {
+	display: grid;
+	gap: 18px;
+	padding: 4px 0 8px;
+}
+
+.ak-field__label {
+	display: block;
+	margin-bottom: 6px;
+	font-weight: 600;
+}
+
+.ak-field--split {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+	gap: 18px;
+}
+
+.ak-field[hidden],
+.ak-subfield[hidden] {
+	display: none;
+}
+
+.ak-subfield {
+	margin-top: 14px;
+	padding-left: 14px;
+	border-left: 3px solid #eef0f2;
+}
+
+.ak-chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.ak-chip {
+	display: inline-flex;
+	gap: .45em;
+	align-items: center;
+	padding: .45em .9em;
+	border: 1px solid #dcdfe4;
+	border-radius: 999px;
+	background: #fff;
+	cursor: pointer;
+	font-size: .9rem;
+	transition: border-color 140ms ease, background 140ms ease;
+}
+
+.ak-chip:hover {
+	border-color: #a7aaad;
+}
+
+.ak-chip:has(input:checked) {
+	border-color: #2271b1;
+	background: #f0f6fc;
+	font-weight: 600;
+}
+
+.ak-chip input {
+	margin: 0;
+}
+
+.ak-schedule__info {
+	margin: 10px 0 0;
+	color: #646970;
+	font-size: .85rem;
+	line-height: 1.5;
+}
+
+.ak-schedule__warning {
+	margin: 8px 0 0;
+	padding: 8px 10px;
+	border-radius: 6px;
+	background: #fdf3dc;
+	color: #7a5600;
+	font-size: .85rem;
+	line-height: 1.5;
+}

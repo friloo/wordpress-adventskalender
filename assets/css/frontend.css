@@ -1,0 +1,962 @@
+/*
+ * Adventskalender – Frontend
+ * Alle Selektoren sind mit .ak- präfixiert, um Theme-Konflikte zu vermeiden.
+ */
+
+/* ---------------------------------------------------------------- Tokens */
+
+.ak-calendar {
+	--ak-radius: 18px;
+	--ak-radius-lg: 26px;
+	--ak-gap: clamp(8px, 1.4vw, 18px);
+	--ak-shadow-door: 0 2px 4px rgba(16, 24, 32, .10), 0 10px 24px -8px rgba(16, 24, 32, .22);
+	--ak-shadow-open: 0 18px 44px -16px rgba(16, 24, 32, .45);
+	--ak-font: inherit;
+	--ak-number-font: ui-serif, Georgia, "Iowan Old Style", "Times New Roman", serif;
+	--ak-ease: cubic-bezier(.22, .78, .26, 1);
+	--ak-duration: 820ms;
+
+	--ak-canvas: #f4f6f8;
+	--ak-canvas-text: #1d2733;
+	--ak-door-face: linear-gradient(155deg, #1f5f46 0%, #16452f 58%, #103726 100%);
+	--ak-door-edge: rgba(255, 255, 255, .22);
+	--ak-door-line: rgba(0, 0, 0, .18);
+	--ak-number: #f6f3e8;
+	--ak-accent: #c8a25a;
+	--ak-inside: #11261d;
+	--ak-inside-text: #f3f6f4;
+
+	position: relative;
+	box-sizing: border-box;
+	margin: 0 auto;
+	padding: clamp(14px, 2.4vw, 30px);
+	border-radius: var(--ak-radius-lg);
+	background: var(--ak-canvas);
+	color: var(--ak-canvas-text);
+	font-family: var(--ak-font);
+	container-type: inline-size;
+}
+
+.ak-calendar *,
+.ak-calendar *::before,
+.ak-calendar *::after {
+	box-sizing: border-box;
+}
+
+/* ---------------------------------------------------------------- Themes */
+
+.ak-calendar--theme-nordic {
+	--ak-canvas: linear-gradient(180deg, #eef3f6 0%, #dfe9ef 100%);
+	--ak-door-face: linear-gradient(155deg, #246d50 0%, #17492f 60%, #0f3524 100%);
+	--ak-number: #f7f4e9;
+	--ak-accent: #c9a961;
+	--ak-inside: #0e2a1e;
+}
+
+.ak-calendar--theme-elegant {
+	--ak-canvas: linear-gradient(180deg, #11182b 0%, #0a0f1d 100%);
+	--ak-canvas-text: #e8ecf6;
+	--ak-door-face: linear-gradient(155deg, #1d2944 0%, #141d33 58%, #0d1424 100%);
+	--ak-door-edge: rgba(212, 175, 95, .35);
+	--ak-number: #e9d8a6;
+	--ak-accent: #d4af5f;
+	--ak-inside: #060a14;
+}
+
+.ak-calendar--theme-warm {
+	--ak-canvas: linear-gradient(180deg, #fdf6ec 0%, #f6e7d4 100%);
+	--ak-canvas-text: #3b2317;
+	--ak-door-face: linear-gradient(155deg, #a8322c 0%, #8a241f 58%, #6d1a16 100%);
+	--ak-number: #fdf2e2;
+	--ak-accent: #c98b3c;
+	--ak-inside: #41140f;
+}
+
+.ak-calendar--theme-modern {
+	--ak-canvas: linear-gradient(180deg, #f6f7f8 0%, #e9edef 100%);
+	--ak-canvas-text: #1b2227;
+	--ak-door-face: linear-gradient(155deg, #37474f 0%, #263238 58%, #1a2327 100%);
+	--ak-number: #eafff7;
+	--ak-accent: #37d6a8;
+	--ak-inside: #101719;
+}
+
+.ak-calendar--theme-candy {
+	--ak-canvas: linear-gradient(180deg, #fff6fb 0%, #f1f3ff 100%);
+	--ak-canvas-text: #3c3350;
+	--ak-door-face: linear-gradient(155deg, #f3b8d2 0%, #d9b3ef 55%, #b9c3f5 100%);
+	--ak-door-line: rgba(255, 255, 255, .5);
+	--ak-number: #42305a;
+	--ak-accent: #8a6ddb;
+	--ak-inside: #4a3a63;
+}
+
+/* -------------------------------------------------------- Hintergrundbild */
+
+.ak-calendar.has-background {
+	background-image: var(--ak-bg);
+	background-size: cover;
+	background-position: center;
+	isolation: isolate;
+}
+
+.ak-calendar.has-background::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	z-index: 0;
+	border-radius: inherit;
+	background: linear-gradient(180deg, rgba(8, 14, 20, .55), rgba(8, 14, 20, .72));
+}
+
+.ak-calendar.has-background > * {
+	position: relative;
+	z-index: 1;
+}
+
+.ak-calendar.has-background {
+	--ak-canvas-text: #f4f7fa;
+}
+
+/* ------------------------------------------------------------ Kopfbereich */
+
+.ak-calendar__intro {
+	margin: 0 0 clamp(14px, 2vw, 26px);
+	text-align: center;
+}
+
+.ak-calendar__heading {
+	margin: 0 0 .35em;
+	font-family: var(--ak-number-font);
+	font-size: clamp(1.6rem, 3.4vw, 2.6rem);
+	font-weight: 600;
+	line-height: 1.15;
+	letter-spacing: -.01em;
+}
+
+.ak-calendar__intro-text {
+	max-width: 60ch;
+	margin: 0 auto;
+	opacity: .85;
+	font-size: clamp(.95rem, 1.6vw, 1.05rem);
+	line-height: 1.6;
+}
+
+.ak-notice {
+	display: flex;
+	flex-wrap: wrap;
+	gap: .4em;
+	align-items: center;
+	justify-content: center;
+	margin: 0 0 clamp(12px, 2vw, 20px);
+	padding: .7em 1.1em;
+	border-radius: 999px;
+	font-size: .9rem;
+	line-height: 1.4;
+	text-align: center;
+}
+
+.ak-notice--test {
+	background: #fff4d6;
+	color: #6b4a06;
+	box-shadow: inset 0 0 0 1px rgba(107, 74, 6, .18);
+}
+
+.ak-notice--preview {
+	background: #e4efff;
+	color: #1c3f72;
+	box-shadow: inset 0 0 0 1px rgba(28, 63, 114, .18);
+}
+
+/* ------------------------------------------------------------------ Raster */
+
+.ak-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: var(--ak-gap);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+@container (min-width: 420px) {
+	.ak-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@container (min-width: 620px) {
+	.ak-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+@container (min-width: 860px) {
+	.ak-grid { grid-template-columns: repeat(var(--ak-cols, 6), minmax(0, 1fr)); }
+}
+
+/* Rückfall für Browser ohne Container-Queries. */
+@supports not (container-type: inline-size) {
+	@media (min-width: 420px) { .ak-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+	@media (min-width: 620px) { .ak-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+	@media (min-width: 900px) { .ak-grid { grid-template-columns: repeat(var(--ak-cols, 6), minmax(0, 1fr)); } }
+}
+
+.ak-cell {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+/* ----------------------------------------------------------------- Türchen */
+
+.ak-door {
+	position: relative;
+	display: block;
+	width: 100%;
+	aspect-ratio: 1 / 1;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	border-radius: var(--ak-radius);
+	background: var(--ak-inside);
+	color: inherit;
+	font: inherit;
+	cursor: pointer;
+	perspective: 900px;
+	-webkit-tap-highlight-color: transparent;
+	transition: transform 220ms var(--ak-ease), box-shadow 220ms var(--ak-ease);
+}
+
+.ak-door:focus-visible {
+	outline: 3px solid var(--ak-accent);
+	outline-offset: 3px;
+}
+
+.ak-door--closed:hover,
+.ak-door--empty:hover {
+	transform: translateY(-3px);
+}
+
+.ak-door--locked {
+	cursor: not-allowed;
+}
+
+/* Rückseite: das, was hinter dem Türchen liegt. */
+.ak-door__inside {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: flex-end;
+	overflow: hidden;
+	border-radius: inherit;
+	background: var(--ak-inside);
+	box-shadow: inset 0 2px 14px rgba(0, 0, 0, .5);
+	color: var(--ak-inside-text);
+}
+
+.ak-door__preview {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: .4em;
+	padding: 8%;
+	text-align: center;
+}
+
+.ak-door__preview-image {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	transform: scale(1.02);
+}
+
+.ak-door__preview-text {
+	position: relative;
+	z-index: 1;
+	display: -webkit-box;
+	overflow: hidden;
+	max-width: 100%;
+	font-size: clamp(.62rem, 1.1cqw + .4rem, .82rem);
+	font-weight: 500;
+	line-height: 1.3;
+	text-shadow: 0 1px 3px rgba(0, 0, 0, .7);
+	text-wrap: balance;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 3;
+}
+
+.ak-door__preview-image + .ak-door__preview-text {
+	align-self: flex-end;
+	margin-top: auto;
+	padding: 36% .2em 0;
+	background: linear-gradient(180deg, rgba(0, 0, 0, 0), rgba(0, 0, 0, .68) 62%);
+	width: 100%;
+}
+
+.ak-door__preview-icon {
+	position: relative;
+	z-index: 1;
+	color: var(--ak-accent);
+	opacity: .9;
+}
+
+.ak-door__lock {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
+	color: rgba(255, 255, 255, .34);
+}
+
+/* Die Klappe. */
+.ak-door__flap {
+	position: absolute;
+	inset: 0;
+	transform-style: preserve-3d;
+	transform-origin: left center;
+	transition: transform var(--ak-duration) var(--ak-ease), filter var(--ak-duration) var(--ak-ease);
+	will-change: transform;
+}
+
+.ak-door__front,
+.ak-door__back {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+	border-radius: inherit;
+	backface-visibility: hidden;
+}
+
+.ak-door__front {
+	background: var(--ak-door-face);
+	background-repeat: no-repeat;
+	box-shadow:
+		inset 0 0 0 1px var(--ak-door-edge),
+		inset 2px 0 0 rgba(255, 255, 255, .10),
+		inset 0 -14px 24px -14px var(--ak-door-line),
+		var(--ak-shadow-door);
+}
+
+/* Feine Papierstruktur – rein CSS, kein Asset nötig. */
+.ak-door__front::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	opacity: .5;
+	background-image:
+		radial-gradient(circle at 18% 22%, rgba(255, 255, 255, .13), transparent 42%),
+		radial-gradient(circle at 82% 86%, rgba(0, 0, 0, .18), transparent 46%);
+	pointer-events: none;
+}
+
+/* Scharnier-Kante links. */
+.ak-door__front::before {
+	content: "";
+	position: absolute;
+	top: 6%;
+	bottom: 6%;
+	left: 4px;
+	width: 2px;
+	border-radius: 2px;
+	background: linear-gradient(180deg, transparent, var(--ak-door-edge) 18%, var(--ak-door-edge) 82%, transparent);
+	pointer-events: none;
+}
+
+.ak-door__back {
+	background: linear-gradient(155deg, #d9d2c4, #bdb5a6);
+	box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .12);
+	transform: rotateY(180deg);
+}
+
+.ak-door__image {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.ak-door__number {
+	position: relative;
+	z-index: 2;
+	font-family: var(--ak-number-font);
+	font-size: clamp(1.4rem, 4.5cqw + .6rem, 2.6rem);
+	font-weight: 600;
+	line-height: 1;
+	color: var(--ak-number);
+	text-shadow: 0 1px 2px rgba(0, 0, 0, .35);
+	font-variant-numeric: lining-nums tabular-nums;
+}
+
+/* Im Mosaik-/Einzelbild-Modus bekommt die Zahl ein lesbares Plättchen. */
+.ak-calendar--mosaic .ak-door__number,
+.ak-calendar--individual .ak-door__number {
+	display: grid;
+	place-items: center;
+	min-width: 2.1em;
+	min-height: 2.1em;
+	padding: .1em .25em;
+	border-radius: 999px;
+	background: rgba(12, 18, 24, .5);
+	backdrop-filter: blur(3px);
+	box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .28);
+	color: #fff;
+	font-size: clamp(1rem, 3cqw + .5rem, 1.7rem);
+}
+
+.ak-door__knob {
+	position: absolute;
+	top: 50%;
+	right: 8%;
+	width: clamp(5px, 1.6cqw, 9px);
+	height: clamp(5px, 1.6cqw, 9px);
+	border-radius: 50%;
+	background: radial-gradient(circle at 32% 30%, #fff, var(--ak-accent) 58%, rgba(0, 0, 0, .45));
+	box-shadow: 0 1px 2px rgba(0, 0, 0, .4);
+	transform: translateY(-50%);
+	opacity: .95;
+}
+
+/* --------------------------------------------------------------- Zustände */
+
+.ak-door.is-open .ak-door__flap {
+	transform: rotateY(-108deg);
+	filter: brightness(.86);
+}
+
+.ak-door.is-open {
+	box-shadow: var(--ak-shadow-open);
+}
+
+.ak-door.is-open .ak-door__preview-image {
+	animation: ak-preview-in 900ms var(--ak-ease) both;
+}
+
+@keyframes ak-preview-in {
+	from { transform: scale(1.14); opacity: .4; }
+	to   { transform: scale(1.02); opacity: 1; }
+}
+
+.ak-door.is-shaking {
+	animation: ak-shake 420ms cubic-bezier(.36, .07, .19, .97);
+}
+
+@keyframes ak-shake {
+	10%, 90% { transform: translateX(-2px); }
+	20%, 80% { transform: translateX(3px); }
+	30%, 50%, 70% { transform: translateX(-5px); }
+	40%, 60% { transform: translateX(5px); }
+}
+
+.ak-door--locked .ak-door__front {
+	filter: saturate(.72) brightness(.88);
+}
+
+.ak-door--locked::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	z-index: 3;
+	display: block;
+	border-radius: inherit;
+	background: rgba(10, 16, 22, 0);
+	transition: background 200ms var(--ak-ease);
+	pointer-events: none;
+}
+
+.ak-door--locked:hover::after,
+.ak-door--locked:focus-visible::after {
+	background: rgba(10, 16, 22, .28);
+}
+
+.ak-door--locked .ak-door__front .ak-door__hint {
+	position: absolute;
+	z-index: 4;
+}
+
+.ak-door[data-preview-only="1"] .ak-door__front::after {
+	box-shadow: inset 0 0 0 2px var(--ak-accent);
+	border-radius: inherit;
+}
+
+/* ---------------------------------------------------------------- Lightbox */
+
+.ak-lightbox {
+	position: fixed;
+	inset: 0;
+	z-index: 100000;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: clamp(10px, 3vw, 40px);
+}
+
+.ak-lightbox[hidden] {
+	display: none;
+}
+
+.ak-lightbox__backdrop {
+	position: absolute;
+	inset: 0;
+	background: rgba(9, 14, 20, .72);
+	backdrop-filter: blur(6px);
+	animation: ak-fade-in 260ms ease both;
+}
+
+@keyframes ak-fade-in {
+	from { opacity: 0; }
+	to   { opacity: 1; }
+}
+
+.ak-lightbox__dialog {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	width: min(860px, 100%);
+	max-height: min(88vh, 100%);
+	overflow: hidden;
+	border-radius: 22px;
+	background: #fff;
+	box-shadow: 0 30px 90px -20px rgba(6, 12, 18, .6);
+	color: #1b2229;
+	animation: ak-lightbox-in 320ms var(--ak-ease) both;
+}
+
+@keyframes ak-lightbox-in {
+	from { opacity: 0; transform: translateY(18px) scale(.97); }
+	to   { opacity: 1; transform: none; }
+}
+
+.ak-lightbox__dialog:focus {
+	outline: none;
+}
+
+.ak-lightbox__close {
+	position: absolute;
+	top: 12px;
+	right: 12px;
+	z-index: 3;
+	display: grid;
+	place-items: center;
+	width: 38px;
+	height: 38px;
+	padding: 0;
+	border: 0;
+	border-radius: 50%;
+	background: rgba(255, 255, 255, .9);
+	box-shadow: 0 2px 10px rgba(0, 0, 0, .18);
+	color: #2b3340;
+	cursor: pointer;
+	transition: background 160ms, transform 160ms;
+}
+
+.ak-lightbox__close:hover {
+	background: #fff;
+	transform: rotate(90deg);
+}
+
+.ak-lightbox__close:focus-visible {
+	outline: 3px solid #2f6fd0;
+	outline-offset: 2px;
+}
+
+.ak-lightbox__header {
+	flex: 0 0 auto;
+	padding: clamp(20px, 3vw, 30px) clamp(20px, 3vw, 36px) 0;
+	padding-right: clamp(60px, 8vw, 72px);
+}
+
+.ak-lightbox__day {
+	margin: 0 0 .35em;
+	color: #7b8694;
+	font-size: .78rem;
+	font-weight: 600;
+	letter-spacing: .12em;
+	text-transform: uppercase;
+}
+
+.ak-lightbox__title {
+	margin: 0;
+	font-family: var(--ak-number-font);
+	font-size: clamp(1.35rem, 2.6vw, 1.95rem);
+	font-weight: 600;
+	line-height: 1.2;
+	color: #15202b;
+	text-wrap: balance;
+}
+
+.ak-lightbox__title:empty {
+	display: none;
+}
+
+.ak-lightbox__content {
+	flex: 1 1 auto;
+	overflow-y: auto;
+	padding: clamp(16px, 2.4vw, 24px) clamp(20px, 3vw, 36px) clamp(20px, 3vw, 30px);
+	overscroll-behavior: contain;
+	-webkit-overflow-scrolling: touch;
+}
+
+.ak-lightbox__loading {
+	margin: 0;
+	padding: 2.5em 0;
+	color: #7b8694;
+	text-align: center;
+}
+
+.ak-lightbox__body--media_side {
+	display: grid;
+	gap: clamp(16px, 2.4vw, 26px);
+	align-items: start;
+}
+
+@media (min-width: 680px) {
+	.ak-lightbox__body--media_side {
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+	}
+}
+
+.ak-lightbox__footer {
+	display: flex;
+	flex: 0 0 auto;
+	gap: 10px;
+	justify-content: space-between;
+	padding: 12px clamp(20px, 3vw, 36px) clamp(16px, 2vw, 22px);
+	border-top: 1px solid #edf0f3;
+}
+
+.ak-lightbox__nav {
+	padding: .6em 1.1em;
+	border: 1px solid #dde2e8;
+	border-radius: 999px;
+	background: #fff;
+	color: #2b3340;
+	font: inherit;
+	font-size: .92rem;
+	cursor: pointer;
+	transition: background 160ms, border-color 160ms, transform 160ms;
+}
+
+.ak-lightbox__nav:hover:not(:disabled) {
+	border-color: #c2cad3;
+	background: #f6f8fa;
+}
+
+.ak-lightbox__nav:focus-visible {
+	outline: 3px solid #2f6fd0;
+	outline-offset: 2px;
+}
+
+.ak-lightbox__nav:disabled {
+	opacity: .38;
+	cursor: default;
+}
+
+/* ------------------------------------------------------------------ Medien */
+
+.ak-media {
+	margin: 0 0 1.1em;
+}
+
+.ak-media__img,
+.ak-media__video {
+	display: block;
+	width: 100%;
+	height: auto;
+	border-radius: 14px;
+	background: #f1f3f5;
+}
+
+.ak-media__video {
+	aspect-ratio: 16 / 9;
+	object-fit: cover;
+}
+
+.ak-media__caption,
+.ak-gallery__caption {
+	margin: .6em 0 0;
+	color: #6c7684;
+	font-size: .85rem;
+	line-height: 1.45;
+}
+
+.ak-embed {
+	position: relative;
+	overflow: hidden;
+	aspect-ratio: 16 / 9;
+	border-radius: 14px;
+	background: #0d1116;
+}
+
+.ak-embed iframe,
+.ak-embed object,
+.ak-embed embed,
+.ak-embed video {
+	position: absolute;
+	inset: 0;
+	width: 100% !important;
+	height: 100% !important;
+	border: 0;
+}
+
+.ak-gallery {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(160px, 100%), 1fr));
+	gap: 12px;
+	margin: 0 0 1.1em;
+}
+
+.ak-gallery__item {
+	margin: 0;
+}
+
+.ak-gallery__zoom {
+	display: block;
+	width: 100%;
+	padding: 0;
+	border: 0;
+	border-radius: 12px;
+	background: none;
+	cursor: zoom-in;
+}
+
+.ak-gallery__zoom:focus-visible {
+	outline: 3px solid #2f6fd0;
+	outline-offset: 2px;
+}
+
+.ak-gallery__img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	aspect-ratio: 4 / 3;
+	border-radius: 12px;
+	object-fit: cover;
+	transition: transform 240ms var(--ak-ease);
+}
+
+.ak-gallery__zoom:hover .ak-gallery__img {
+	transform: scale(1.02);
+}
+
+/* Vollbild für ein Galeriebild. */
+.ak-zoom {
+	position: fixed;
+	inset: 0;
+	z-index: 100001;
+	display: grid;
+	place-items: center;
+	padding: 4vmin;
+	background: rgba(6, 10, 14, .92);
+	cursor: zoom-out;
+	animation: ak-fade-in 200ms ease both;
+}
+
+.ak-zoom img {
+	max-width: 100%;
+	max-height: 92vh;
+	border-radius: 10px;
+	box-shadow: 0 20px 60px rgba(0, 0, 0, .55);
+}
+
+/* -------------------------------------------------------------------- Text */
+
+.ak-prose {
+	font-size: 1rem;
+	line-height: 1.68;
+	color: #333c47;
+}
+
+.ak-prose > :first-child { margin-top: 0; }
+.ak-prose > :last-child  { margin-bottom: 0; }
+
+.ak-prose p,
+.ak-prose ul,
+.ak-prose ol,
+.ak-prose blockquote {
+	margin: 0 0 1em;
+}
+
+.ak-prose h2,
+.ak-prose h3,
+.ak-prose h4 {
+	margin: 1.6em 0 .5em;
+	font-family: var(--ak-number-font);
+	font-weight: 600;
+	line-height: 1.25;
+	color: #15202b;
+}
+
+.ak-prose h2 { font-size: 1.3rem; }
+.ak-prose h3 { font-size: 1.12rem; }
+
+.ak-prose a {
+	color: #1f5fbf;
+	text-decoration-thickness: 1px;
+	text-underline-offset: 2px;
+}
+
+.ak-prose img {
+	max-width: 100%;
+	height: auto;
+	border-radius: 12px;
+}
+
+.ak-prose figure { margin: 1.2em 0; }
+
+.ak-prose blockquote {
+	padding: .2em 0 .2em 1.1em;
+	border-left: 3px solid var(--ak-accent, #c8a25a);
+	color: #4a555f;
+	font-style: italic;
+}
+
+.ak-prose ul,
+.ak-prose ol { padding-left: 1.4em; }
+
+.ak-prose li { margin-bottom: .3em; }
+
+.ak-empty {
+	margin: 0;
+	padding: 2em 0;
+	color: #7b8694;
+	text-align: center;
+}
+
+.ak-cta {
+	margin: 1.4em 0 0;
+}
+
+.ak-button {
+	display: inline-block;
+	padding: .75em 1.5em;
+	border-radius: 999px;
+	background: #15202b;
+	color: #fff;
+	font-weight: 600;
+	font-size: .95rem;
+	text-decoration: none;
+	transition: transform 160ms var(--ak-ease), opacity 160ms;
+}
+
+.ak-button:hover {
+	transform: translateY(-1px);
+	opacity: .92;
+	color: #fff;
+}
+
+.ak-button:focus-visible {
+	outline: 3px solid #2f6fd0;
+	outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------------- Toast */
+
+.ak-toast {
+	position: fixed;
+	bottom: max(18px, env(safe-area-inset-bottom));
+	left: 50%;
+	z-index: 100002;
+	max-width: min(92vw, 420px);
+	padding: .8em 1.3em;
+	border-radius: 999px;
+	background: #15202b;
+	box-shadow: 0 12px 34px -10px rgba(0, 0, 0, .55);
+	color: #fff;
+	font-size: .92rem;
+	line-height: 1.4;
+	text-align: center;
+	opacity: 0;
+	transform: translate(-50%, 14px);
+	transition: opacity 220ms var(--ak-ease), transform 220ms var(--ak-ease);
+	pointer-events: none;
+}
+
+.ak-toast.is-visible {
+	opacity: 1;
+	transform: translate(-50%, 0);
+}
+
+/* -------------------------------------------------------------------- Schnee */
+
+.ak-snow {
+	position: absolute;
+	inset: 0;
+	z-index: 2;
+	overflow: hidden;
+	border-radius: inherit;
+	pointer-events: none;
+}
+
+.ak-snow::before,
+.ak-snow::after {
+	content: "";
+	position: absolute;
+	inset: -120% 0 0;
+	background-image:
+		radial-gradient(2px 2px at 20% 12%, rgba(255, 255, 255, .9), transparent),
+		radial-gradient(2px 2px at 64% 28%, rgba(255, 255, 255, .75), transparent),
+		radial-gradient(1.5px 1.5px at 38% 56%, rgba(255, 255, 255, .8), transparent),
+		radial-gradient(2.5px 2.5px at 84% 72%, rgba(255, 255, 255, .65), transparent),
+		radial-gradient(1.5px 1.5px at 8% 84%, rgba(255, 255, 255, .8), transparent);
+	background-size: 340px 340px;
+	animation: ak-snow-fall 16s linear infinite;
+}
+
+.ak-snow::after {
+	background-size: 500px 500px;
+	opacity: .6;
+	animation-duration: 26s;
+	animation-delay: -8s;
+}
+
+@keyframes ak-snow-fall {
+	from { transform: translate3d(0, 0, 0); }
+	to   { transform: translate3d(-40px, 340px, 0); }
+}
+
+/* ------------------------------------------------------- Bewegung reduzieren */
+
+@media (prefers-reduced-motion: reduce) {
+	.ak-calendar * {
+		animation-duration: .01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: .01ms !important;
+	}
+
+	.ak-snow {
+		display: none;
+	}
+
+	.ak-door.is-open .ak-door__flap {
+		transform: rotateY(-108deg);
+	}
+}
+
+/* --------------------------------------------------------------- Druckbild */
+
+@media print {
+	.ak-lightbox,
+	.ak-toast,
+	.ak-snow {
+		display: none !important;
+	}
+}
+
+/* ----------------------------------------------------- Hoher Kontrastmodus */
+
+@media (forced-colors: active) {
+	.ak-door__front {
+		border: 1px solid CanvasText;
+	}
+
+	.ak-lightbox__dialog {
+		border: 1px solid CanvasText;
+	}
+}

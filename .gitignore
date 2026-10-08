@@ -1,0 +1,10 @@
+# Entwicklungsdateien
+node_modules/
+vendor/
+.DS_Store
+Thumbs.db
+*.log
+.phpunit.result.cache
+/build/
+/dist/
+*.zip
