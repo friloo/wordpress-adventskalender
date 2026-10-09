@@ -348,10 +348,22 @@
 	 * Markiert ein Türchen als geöffnet – inklusive passender Beschriftung
 	 * für Screenreader.
 	 */
-	Calendar.prototype.markOpen = function ( door, day ) {
+	Calendar.prototype.markOpen = function ( door, day, animate ) {
 		door.classList.add( 'is-open' );
 		door.setAttribute( 'aria-expanded', 'true' );
 		door.setAttribute( 'aria-label', format( I18N.alreadyOpen, [ day ] ) );
+
+		// Die aufgeklappte Tür verschwindet nach der Animation. Bliebe sie
+		// stehen, läge am Ende jede geöffnete Klappe über ihrem linken
+		// Nachbarn.
+		if ( ! animate || REDUCED ) {
+			door.classList.add( 'is-revealed' );
+			return;
+		}
+
+		window.setTimeout( function () {
+			door.classList.add( 'is-revealed' );
+		}, 900 );
 	};
 
 	/**
@@ -427,7 +439,7 @@
 		if ( 'locked' === entry.state ) {
 			door.setAttribute( 'aria-disabled', 'true' );
 			door.setAttribute( 'data-notice', entry.notice || '' );
-			door.classList.remove( 'is-open' );
+			door.classList.remove( 'is-open', 'is-revealed' );
 			door.setAttribute( 'aria-expanded', 'false' );
 			door.setAttribute( 'aria-label', format( I18N.lockedDoor, [ entry.day, entry.notice || '' ] ) );
 		} else {
@@ -474,7 +486,7 @@
 
 		var alreadyOpen = door.classList.contains( 'is-open' );
 
-		this.markOpen( door, day );
+		this.markOpen( door, day, ! alreadyOpen );
 		this.rememberOpened( day );
 
 		var delay = alreadyOpen || REDUCED ? 0 : 520;
@@ -561,6 +573,7 @@
 		document.body.style.overflow = 'hidden';
 
 		if ( this.dayEl ) {
+			this.dayEl.hidden = false;
 			this.dayEl.textContent = format( I18N.doorLabel, [ day ] );
 		}
 		if ( this.titleEl ) {
@@ -608,6 +621,15 @@
 		if ( this.titleEl ) {
 			this.titleEl.textContent = data.title || '';
 		}
+
+		// Heißt das Türchen schlicht „Türchen 7“, stünde das zweimal
+		// übereinander. Dann reicht die Überschrift.
+		if ( this.dayEl ) {
+			var normalise = function ( value ) {
+				return String( value || '' ).replace( /\s+/g, ' ' ).trim().toLowerCase();
+			};
+			this.dayEl.hidden = normalise( data.title ) === normalise( this.dayEl.textContent );
+		}
 		if ( this.contentEl ) {
 			// Das Markup stammt ausschließlich aus der eigenen REST-Route
 			// und wurde serverseitig mit wp_kses_post bereinigt.
@@ -625,7 +647,7 @@
 		if ( ! door ) {
 			return;
 		}
-		door.classList.remove( 'is-open' );
+		door.classList.remove( 'is-open', 'is-revealed' );
 		door.setAttribute( 'data-state', 'locked' );
 		door.setAttribute( 'aria-expanded', 'false' );
 		door.setAttribute( 'aria-disabled', 'true' );

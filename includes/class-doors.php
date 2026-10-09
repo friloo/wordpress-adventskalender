@@ -39,6 +39,8 @@ class Doors {
 	const META_DOOR_IMAGE    = '_ak_door_image';
 	const META_LINK_URL      = '_ak_link_url';
 	const META_LINK_LABEL    = '_ak_link_label';
+	const META_AUTO_POSTER   = '_ak_auto_poster';
+	const META_AUTO_POSTER_SRC = '_ak_auto_poster_src';
 
 	/**
 	 * Voreingestellte Anordnung in der Lightbox.
@@ -178,6 +180,8 @@ class Doors {
 			self::META_DOOR_IMAGE    => array( 'integer', array( Settings::class, 'sanitize_attachment_id' ) ),
 			self::META_LINK_URL      => array( 'string', 'esc_url_raw' ),
 			self::META_LINK_LABEL    => array( 'string', 'sanitize_text_field' ),
+			self::META_AUTO_POSTER   => array( 'integer', array( Settings::class, 'sanitize_attachment_id' ) ),
+			self::META_AUTO_POSTER_SRC => array( 'string', 'esc_url_raw' ),
 		);
 
 		foreach ( $fields as $key => $config ) {

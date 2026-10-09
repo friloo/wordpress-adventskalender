@@ -327,7 +327,20 @@ class Metabox {
 				<div>
 					<label class="ak-field__label"><?php esc_html_e( 'Vorschaubild', 'adventskalender' ); ?></label>
 					<?php Admin::media_field( 'ak_preview_image', (int) self::value( $post->ID, Doors::META_PREVIEW_IMAGE, 0 ) ); ?>
-					<p class="description"><?php esc_html_e( 'Ohne Angabe wird automatisch das Bild bzw. Video-Vorschaubild verwendet.', 'adventskalender' ); ?></p>
+					<p class="description">
+						<?php esc_html_e( 'Ohne Angabe wird der Reihe nach verwendet: das Titelbild, ein automatisch geholtes Videobild, sonst das erste Bild aus dem Text.', 'adventskalender' ); ?>
+					</p>
+					<?php
+					$auto = Settings::sanitize_attachment_id( self::value( $post->ID, Doors::META_AUTO_POSTER, 0 ) );
+					if ( $auto > 0 ) :
+						?>
+						<div class="ak-auto-poster">
+							<?php echo wp_get_attachment_image( $auto, 'thumbnail', false, array( 'alt' => '' ) ); ?>
+							<p class="description">
+								<?php esc_html_e( 'Dieses Bild wurde beim Speichern automatisch vom Videoanbieter geholt und in der Mediathek abgelegt – beim Aufruf der Seite entsteht also keine Verbindung dorthin. Ein eigenes Vorschaubild ersetzt es.', 'adventskalender' ); ?>
+							</p>
+						</div>
+					<?php endif; ?>
 				</div>
 				<div>
 					<label class="ak-field__label" for="ak-field-preview-text"><?php esc_html_e( 'Vorschautext', 'adventskalender' ); ?></label>
@@ -515,6 +528,9 @@ class Metabox {
 				delete_post_meta( $post_id, $meta_key );
 			}
 		}
+
+		// Vorschaubild eines eingebetteten Videos einmalig nachladen.
+		Poster::sync( $post_id );
 
 		Doors::flush_cache();
 	}

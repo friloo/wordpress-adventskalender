@@ -71,7 +71,7 @@ $palette = Color::palette( '#0057b8', 'light' );
 $expected_keys = array(
 	'--ak-brand', '--ak-canvas', '--ak-canvas-flat', '--ak-canvas-text', '--ak-door-face',
 	'--ak-door-base', '--ak-door-edge', '--ak-door-line', '--ak-door-back', '--ak-number',
-	'--ak-accent', '--ak-knob', '--ak-inside', '--ak-inside-text',
+	'--ak-accent', '--ak-knob', '--ak-inside', '--ak-inside-soft', '--ak-inside-text',
 );
 check( 'alle Variablen vorhanden', empty( array_diff( $expected_keys, array_keys( $palette ) ) ), implode( ',', array_diff( $expected_keys, array_keys( $palette ) ) ) );
 check( 'Markenfarbe unverändert enthalten', '#0057b8' === $palette['--ak-brand'] );
@@ -121,7 +121,10 @@ foreach ( array( 'light', 'dark' ) as $scheme ) {
 					'text'   => array( Color::contrast( $p['--ak-canvas-text'], $p['--ak-canvas-flat'] ), 4.5 ),
 					'accent' => array( Color::contrast( $p['--ak-accent'], $p['--ak-canvas-flat'] ), 3.0 ),
 					'knob'   => array( Color::contrast( $p['--ak-knob'], $p['--ak-door-base'] ), 3.0 ),
-					'teaser' => array( Color::contrast( $p['--ak-inside-text'], $p['--ak-inside'] ), 4.5 ),
+					'teaser' => array( min(
+						Color::contrast( $p['--ak-inside-text'], $p['--ak-inside'] ),
+						Color::contrast( $p['--ak-inside-text'], $p['--ak-inside-soft'] )
+					), 4.5 ),
 				);
 
 				foreach ( $measures as $name => $m ) {
@@ -143,7 +146,7 @@ foreach ( array(
 	'text'   => 'Text auf der Kalenderfläche (>= 4,5:1)',
 	'accent' => 'Akzent/Fokusring auf der Fläche (>= 3:1)',
 	'knob'   => 'Türknauf auf dem Türchen (>= 3:1)',
-	'teaser' => 'Vorschautext hinter dem Türchen (>= 4,5:1)',
+	'teaser' => 'Vorschautext auf beiden Innenflächen (>= 4,5:1)',
 ) as $name => $label ) {
 	printf( "  Info: schlechtester Wert %s: %.2f:1 (%s)\n", $name, $worst[ $name ][0], $worst[ $name ][1] );
 	check(

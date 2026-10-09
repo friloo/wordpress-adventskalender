@@ -86,10 +86,12 @@ $GLOBALS['ak_attachment_meta'][1] = array(
 function seed_doors(): void {
 	$GLOBALS['ak_doors'] = array();
 	for ( $day = 1; $day <= 24; $day++ ) {
+		// Tag 4 heißt bewusst wie die Augenzeile darüber – dort darf die
+		// Überschrift nicht doppelt erscheinen.
 		$GLOBALS['ak_doors'][ $day ] = new WP_Post(
 			array(
 				'ID'           => 100 + $day,
-				'post_title'   => 'Titel ' . $day,
+				'post_title'   => 4 === $day ? 'Türchen 4' : 'Titel ' . $day,
 				'post_content' => 'Inhalt von Tag ' . $day . '.',
 			)
 		);
@@ -144,7 +146,9 @@ function build( string $file, string $render_date, string $state_date, array $se
 		if ( $entry['unlocked'] ) {
 			$doors[ $day ] = array(
 				'day'   => $day,
-				'title' => 'Titel ' . $day,
+				// Echten Titel übernehmen, nicht erfinden – sonst prüfen die
+				// Tests gegen etwas, das der Server nie liefern würde.
+				'title' => $GLOBALS['ak_doors'][ $day ]->post_title,
 				'html'  => Content::render( $GLOBALS['ak_doors'][ $day ], $day ),
 				'empty' => false,
 			);

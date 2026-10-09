@@ -388,6 +388,32 @@
 		apply();
 	}
 
+	/**
+	 * Zeigt die gewählte Zahlenschrift sofort an.
+	 */
+	function initFontPreview() {
+		var select = document.querySelector( '[data-ak-font-select]' );
+		var sample = document.querySelector( '[data-ak-font-sample]' );
+		if ( ! select || ! sample ) {
+			return;
+		}
+
+		function apply() {
+			var option = select.options[ select.selectedIndex ];
+			var stack = option ? option.getAttribute( 'data-stack' ) : '';
+			sample.style.fontFamily = stack || '';
+
+			// Auch die Türchen in der Markenvorschau mitziehen.
+			var preview = document.querySelector( '[data-ak-preview-calendar]' );
+			if ( preview ) {
+				preview.style.setProperty( '--ak-door-number-font', stack || 'inherit' );
+			}
+		}
+
+		select.addEventListener( 'change', apply );
+		apply();
+	}
+
 	function boot() {
 		Array.prototype.forEach.call( document.querySelectorAll( '[data-ak-media]' ), initMediaField );
 		Array.prototype.forEach.call( document.querySelectorAll( '[data-ak-gallery]' ), initGalleryField );
@@ -396,6 +422,7 @@
 		initShuffleConfirm();
 		initThemeFields();
 		initBrandColor();
+		initFontPreview();
 	}
 
 	if ( 'loading' === document.readyState ) {

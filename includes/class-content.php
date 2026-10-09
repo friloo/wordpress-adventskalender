@@ -112,13 +112,31 @@ class Content {
 			return '';
 		}
 
-		// Bewusst ohne „the_content“, um Rekursionen mit anderen Plugins zu vermeiden.
-		// Block-Inhalte bringen ihr eigenes Markup mit – wpautop würde dort
-		// zusätzliche Absätze zwischen die Blöcke setzen. WordPress selbst
-		// hängt wpautop bei Blockinhalten ebenfalls aus.
+		// Bewusst ohne „the_content“, um Rekursionen mit anderen Plugins zu
+		// vermeiden. Dafür müssen die Schritte, die WordPress dort erledigt,
+		// hier einzeln nachgezogen werden.
 		$has_blocks = function_exists( 'has_blocks' ) && has_blocks( $raw );
 
-		$html = do_blocks( $raw );
+		// Einbettungen brauchen den Beitragskontext: WordPress legt die
+		// oEmbed-Antwort als Meta am Beitrag ab, und get_post() liefert
+		// dafür den globalen Beitrag.
+		$previous_post     = $GLOBALS['post'] ?? null;
+		$GLOBALS['post']   = $post; // phpcs:ignore WordPress.WP.GlobalVariablesOverride
+		$html              = $raw;
+
+		// [embed]-Shortcodes und nackte URLs auflösen. WordPress hängt beides
+		// mit Priorität 8 vor do_blocks ein – ohne diesen Schritt bleibt die
+		// YouTube-Adresse aus einem Embed-Block als Text stehen.
+		if ( isset( $GLOBALS['wp_embed'] ) && is_object( $GLOBALS['wp_embed'] ) ) {
+			if ( method_exists( $GLOBALS['wp_embed'], 'run_shortcode' ) ) {
+				$html = $GLOBALS['wp_embed']->run_shortcode( $html );
+			}
+			if ( method_exists( $GLOBALS['wp_embed'], 'autoembed' ) ) {
+				$html = $GLOBALS['wp_embed']->autoembed( $html );
+			}
+		}
+
+		$html = do_blocks( $html );
 		$html = wptexturize( $html );
 		$html = convert_smilies( $html );
 		if ( ! $has_blocks ) {
@@ -127,6 +145,8 @@ class Content {
 		$html = shortcode_unautop( $html );
 		$html = do_shortcode( $html );
 		$html = wp_filter_content_tags( $html, 'adventskalender' );
+
+		$GLOBALS['post'] = $previous_post; // phpcs:ignore WordPress.WP.GlobalVariablesOverride
 
 		return '<div class="ak-prose">' . $html . '</div>';
 	}
@@ -336,24 +356,136 @@ class Content {
 	}
 
 	/**
+	 * Sucht das erste Bild im Beitragstext.
+	 *
+	 * Deckt beide Editoren ab: WordPress hängt eingefügten Mediathek-
+	 * Bildern die Klasse „wp-image-123“ an, extern eingebundene Bilder
+	 * werden über ihre Adresse erkannt.
+	 *
+	 * @param \WP_Post $post Türchen-Beitrag.
+	 * @return array{id:int,url:string}
+	 */
+	public static function first_content_image( \WP_Post $post ): array {
+		$content = (string) $post->post_content;
+		$empty   = array(
+			'id'  => 0,
+			'url' => '',
+		);
+
+		if ( '' === trim( $content ) ) {
+			return $empty;
+		}
+
+		if ( preg_match( '/wp-image-(\d+)/', $content, $match ) ) {
+			$id = Settings::sanitize_attachment_id( $match[1] );
+			if ( $id > 0 ) {
+				return array(
+					'id'  => $id,
+					'url' => '',
+				);
+			}
+		}
+
+		if ( preg_match( '/<img[^>]+src=["\']([^"\']+)["\']/i', $content, $match ) ) {
+			$url = esc_url_raw( html_entity_decode( $match[1], ENT_QUOTES, 'UTF-8' ) );
+			if ( '' !== $url ) {
+				return array(
+					'id'  => 0,
+					'url' => $url,
+				);
+			}
+		}
+
+		return $empty;
+	}
+
+	/**
+	 * Leitet einen Teaser aus dem Beitragstext ab.
+	 *
+	 * Blockkommentare und nackte Adressen fliegen heraus: bei einem
+	 * Einbettungsblock stünde sonst die rohe YouTube-Adresse als Teaser
+	 * hinter dem Türchen.
+	 *
+	 * @param \WP_Post $post Türchen-Beitrag.
+	 */
+	public static function teaser_from_content( \WP_Post $post ): string {
+		$plain = (string) $post->post_content;
+		if ( '' === trim( $plain ) ) {
+			return '';
+		}
+
+		$plain = (string) preg_replace( '#<!--.*?-->#s', ' ', $plain );
+		$plain = strip_shortcodes( $plain );
+		$plain = wp_strip_all_tags( $plain );
+		$plain = (string) preg_replace( '#https?://\S+#i', ' ', $plain );
+		$plain = trim( (string) preg_replace( '/\s+/u', ' ', $plain ) );
+
+		return '' === $plain ? '' : wp_trim_words( $plain, 12, '…' );
+	}
+
+	/**
+	 * Erste Videoadresse im Beitragstext.
+	 *
+	 * @param \WP_Post $post Türchen-Beitrag.
+	 */
+	public static function first_content_video_url( \WP_Post $post ): string {
+		$content = (string) $post->post_content;
+		if ( '' === trim( $content ) ) {
+			return '';
+		}
+
+		$pattern = '#https?://(?:www\.)?(?:youtube\.com/[^\s"\'<>]+|youtu\.be/[^\s"\'<>]+|vimeo\.com/[^\s"\'<>]+)#i';
+		if ( preg_match( $pattern, $content, $match ) ) {
+			return esc_url_raw( html_entity_decode( $match[0], ENT_QUOTES, 'UTF-8' ) );
+		}
+
+		return '';
+	}
+
+	/**
+	 * Steckt im Beitrag ein Video?
+	 *
+	 * Erkennt Einbettungsblöcke und die üblichen Videoadressen, damit die
+	 * Vorschau ein Abspielsymbol zeigen kann.
+	 *
+	 * @param \WP_Post $post Türchen-Beitrag.
+	 */
+	public static function content_has_video( \WP_Post $post ): bool {
+		$content = (string) $post->post_content;
+		if ( '' === trim( $content ) ) {
+			return false;
+		}
+
+		return (bool) preg_match(
+			'#is-type-video|wp-block-embed-(youtube|vimeo|dailymotion)|<video|youtube\.com|youtu\.be|vimeo\.com#i',
+			$content
+		);
+	}
+
+	/**
 	 * Daten für die kleine Vorschau hinter dem geöffneten Türchen.
 	 *
 	 * @param \WP_Post|null $post Türchen-Beitrag oder null.
-	 * @return array{image:int,text:string}
+	 * @return array{image:int,url:string,text:string,video:bool}
 	 */
 	public static function preview( ?\WP_Post $post ): array {
+		$empty = array(
+			'image' => 0,
+			'url'   => '',
+			'text'  => '',
+			'video' => false,
+		);
+
 		if ( ! $post instanceof \WP_Post ) {
-			return array(
-				'image' => 0,
-				'text'  => '',
-			);
+			return $empty;
 		}
 
+		$type  = Doors::sanitize_media_type( self::meta( $post->ID, Doors::META_MEDIA_TYPE, 'none' ) );
 		$image = Settings::sanitize_attachment_id( self::meta( $post->ID, Doors::META_PREVIEW_IMAGE, 0 ) );
+		$url   = '';
 
 		if ( $image <= 0 ) {
 			// Sinnvolle Rückfallbilder je Medientyp.
-			$type = Doors::sanitize_media_type( self::meta( $post->ID, Doors::META_MEDIA_TYPE, 'none' ) );
 			if ( 'image' === $type ) {
 				$image = Settings::sanitize_attachment_id( self::meta( $post->ID, Doors::META_IMAGE, 0 ) );
 			} elseif ( 'gallery' === $type ) {
@@ -364,14 +496,29 @@ class Content {
 			}
 		}
 
+		// Automatisch beim Speichern geholtes Videobild.
+		if ( $image <= 0 ) {
+			$image = Settings::sanitize_attachment_id( self::meta( $post->ID, Doors::META_AUTO_POSTER, 0 ) );
+		}
+
+		// Zuletzt das erste Bild aus dem Text – damit ein Bericht ohne
+		// eigenes Vorschaubild nicht als leere Fläche erscheint.
+		if ( $image <= 0 ) {
+			$found = self::first_content_image( $post );
+			$image = $found['id'];
+			$url   = $found['url'];
+		}
+
 		$text = (string) self::meta( $post->ID, Doors::META_PREVIEW_TEXT, '' );
 		if ( '' === trim( $text ) ) {
-			$text = wp_trim_words( wp_strip_all_tags( strip_shortcodes( (string) $post->post_content ) ), 12, '…' );
+			$text = self::teaser_from_content( $post );
 		}
 
 		return array(
 			'image' => $image,
+			'url'   => $url,
 			'text'  => $text,
+			'video' => 'video' === $type || self::content_has_video( $post ),
 		);
 	}
 

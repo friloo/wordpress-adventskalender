@@ -200,6 +200,80 @@ test( 'Fokus-Falle: Tabulator verlässt den Dialog nicht', async ( browser ) => 
 	);
 } );
 
+test( 'Geöffnete Klappe verschwindet und verdeckt nichts', async ( browser ) => {
+	const page = await openPage( browser, 'kalender.html' );
+	const before = await page.evaluate(
+		() => getComputedStyle( document.querySelector( '.ak-door[data-day="3"] .ak-door__flap' ) ).display
+	);
+	ok( 'none' !== before, 'vor dem Öffnen ist die Klappe da' );
+
+	await page.locator( '.ak-door[data-day="3"]' ).click();
+	await page.waitForTimeout( 1300 );
+	const after = await page.evaluate( () => {
+		const door = document.querySelector( '.ak-door[data-day="3"]' );
+		const flap = door.querySelector( '.ak-door__flap' );
+		const rect = door.getBoundingClientRect();
+		// Liegt links daneben noch etwas von diesem Türchen?
+		const left = document.elementFromPoint( rect.left - rect.width * 0.15, rect.top + rect.height / 2 );
+		return {
+			display: getComputedStyle( flap ).display,
+			revealed: door.classList.contains( 'is-revealed' ),
+			overlapsNeighbour: !! ( left && left.closest( '.ak-door' ) === door ),
+		};
+	} );
+	equal( after.display, 'none', 'Klappe ist weg' );
+	ok( after.revealed, 'Türchen ist als aufgedeckt markiert' );
+	ok( ! after.overlapsNeighbour, 'nichts ragt mehr über den Nachbarn' );
+} );
+
+test( 'Gemerkte Türchen zeigen beim Laden gar keine Klappe', async ( browser ) => {
+	const context = await browser.newContext( { viewport: { width: 1280, height: 950 } } );
+	const page = await context.newPage();
+	await page.goto( `${ BASE }/kalender.html` );
+	await page.waitForTimeout( 450 );
+	await page.locator( '.ak-door[data-day="2"]' ).click();
+	await page.waitForTimeout( 1200 );
+
+	await page.goto( `${ BASE }/kalender.html` );
+	await page.waitForTimeout( 500 );
+	const result = await page.evaluate( () => {
+		const door = document.querySelector( '.ak-door[data-day="2"]' );
+		return {
+			revealed: door.classList.contains( 'is-revealed' ),
+			display: getComputedStyle( door.querySelector( '.ak-door__flap' ) ).display,
+			others: getComputedStyle( document.querySelector( '.ak-door[data-day="1"] .ak-door__flap' ) ).display,
+		};
+	} );
+	ok( result.revealed, 'sofort aufgedeckt, ohne Animation' );
+	equal( result.display, 'none', 'keine Klappe' );
+	ok( 'none' !== result.others, 'ungeöffnete Türchen behalten ihre Klappe' );
+	await context.close();
+} );
+
+test( 'Überschrift steht nicht doppelt', async ( browser ) => {
+	const page = await openPage( browser, 'kalender.html' );
+
+	await page.locator( '.ak-door[data-day="3"]' ).click();
+	await page.waitForTimeout( 1000 );
+	const andererTitel = await page.evaluate( () => ( {
+		augenzeile: document.querySelector( '[data-ak-day]' ).hidden,
+		titel: document.querySelector( '[data-ak-title]' ).textContent,
+	} ) );
+	ok( ! andererTitel.augenzeile, 'bei eigenem Titel bleibt die Augenzeile' );
+	equal( andererTitel.titel, 'Titel 3', 'Titel' );
+
+	await page.keyboard.press( 'Escape' );
+	await page.waitForTimeout( 400 );
+	await page.locator( '.ak-door[data-day="4"]' ).click();
+	await page.waitForTimeout( 1000 );
+	const gleicherTitel = await page.evaluate( () => ( {
+		augenzeile: document.querySelector( '[data-ak-day]' ).hidden,
+		titel: document.querySelector( '[data-ak-title]' ).textContent,
+	} ) );
+	ok( gleicherTitel.augenzeile, 'heißt das Türchen „Türchen 4“, verschwindet die Augenzeile' );
+	equal( gleicherTitel.titel, 'Türchen 4', 'Überschrift bleibt' );
+} );
+
 test( 'Gecachte Seite: Zustand wird nachgezogen', async ( browser ) => {
 	const page = await openPage( browser, 'veraltet.html' );
 	const result = await page.evaluate( () => ( {
@@ -221,15 +295,15 @@ test( 'Gecachte Seite: Zustand wird nachgezogen', async ( browser ) => {
 } );
 
 test( 'Verlinktes Türchen öffnet sich beim Laden', async ( browser ) => {
-	const page = await openPage( browser, 'kalender.html?tuerchen=4' );
+	const page = await openPage( browser, 'kalender.html?tuerchen=5' );
 	await page.waitForTimeout( 900 );
 	const result = await page.evaluate( () => ( {
 		lightbox: ! document.querySelector( '[data-ak-lightbox]' ).hidden,
 		title: document.querySelector( '[data-ak-title]' ).textContent,
-		doorOpen: document.querySelector( '.ak-door[data-day="4"]' ).classList.contains( 'is-open' ),
+		doorOpen: document.querySelector( '.ak-door[data-day="5"]' ).classList.contains( 'is-open' ),
 	} ) );
 	ok( result.lightbox, 'Lightbox offen' );
-	equal( result.title, 'Titel 4', 'richtiges Türchen' );
+	equal( result.title, 'Titel 5', 'richtiges Türchen' );
 	ok( result.doorOpen, 'Türchen sichtbar geöffnet' );
 } );
 

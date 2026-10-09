@@ -420,8 +420,10 @@ class Admin {
 					?>
 					<li class="ak-card <?php echo esc_attr( $state_class ); ?><?php echo $is_today ? ' is-today' : ''; ?>">
 						<div class="ak-card__media">
-							<?php if ( $preview['image'] > 0 ) : ?>
+							<?php if ( (int) $preview['image'] > 0 ) : ?>
 								<?php echo wp_get_attachment_image( (int) $preview['image'], 'medium', false, array( 'alt' => '' ) ); ?>
+							<?php elseif ( '' !== (string) $preview['url'] ) : ?>
+								<img src="<?php echo esc_url( (string) $preview['url'] ); ?>" alt="" loading="lazy" />
 							<?php else : ?>
 								<span class="ak-card__placeholder" aria-hidden="true">
 									<span class="dashicons <?php echo esc_attr( $summary['icon'] ); ?>"></span>
@@ -787,6 +789,31 @@ class Admin {
 										<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $key, $s['theme'] ); ?>><?php echo esc_html( $label ); ?></option>
 									<?php endforeach; ?>
 								</select>
+							</td>
+						</tr>
+						<tr>
+							<th scope="row"><label for="ak-number-font"><?php esc_html_e( 'Schrift der Zahlen', 'adventskalender' ); ?></label></th>
+							<td>
+								<div class="ak-font-row">
+									<select id="ak-number-font" name="<?php echo esc_attr( $name ); ?>[number_font]" data-ak-font-select>
+										<?php foreach ( Settings::number_fonts() as $key => $font ) : ?>
+											<option
+												value="<?php echo esc_attr( $key ); ?>"
+												data-stack="<?php echo esc_attr( $font['stack'] ); ?>"
+												<?php selected( $key, $s['number_font'] ); ?>
+											><?php echo esc_html( $font['label'] ); ?></option>
+										<?php endforeach; ?>
+									</select>
+									<span
+										class="ak-font-sample"
+										data-ak-font-sample
+										style="font-family:<?php echo esc_attr( Settings::number_font_stack( (string) $s['number_font'] ) ); ?>"
+										aria-hidden="true"
+									>24</span>
+								</div>
+								<p class="description">
+									<?php esc_html_e( 'Alle Auswahlmöglichkeiten sind Systemschriften – es wird nichts nachgeladen, es entstehen keine Verbindungen zu fremden Servern.', 'adventskalender' ); ?>
+								</p>
 							</td>
 						</tr>
 						<tr class="ak-brand-row" data-ak-when-theme="brand">

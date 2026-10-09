@@ -46,6 +46,7 @@ require_once __DIR__ . '/includes/class-doors.php';
 require_once __DIR__ . '/includes/class-doors-rest-controller.php';
 require_once __DIR__ . '/includes/class-availability.php';
 require_once __DIR__ . '/includes/class-content.php';
+require_once __DIR__ . '/includes/class-poster.php';
 require_once __DIR__ . '/includes/class-renderer.php';
 require_once __DIR__ . '/includes/class-rest.php';
 require_once __DIR__ . '/includes/class-admin.php';

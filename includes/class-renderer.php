@@ -342,7 +342,11 @@ class Renderer {
 			$background_url = self::image_url_for_width( $background_id, self::WIDE_IMAGE_WIDTH );
 		}
 
-		$styles = array( '--ak-cols:' . $cols, '--ak-rows:' . max( 1, $rows ) );
+		$styles = array(
+			'--ak-cols:' . $cols,
+			'--ak-rows:' . max( 1, $rows ),
+			'--ak-door-number-font:' . Settings::number_font_stack( (string) $settings['number_font'] ),
+		);
 		if ( '' !== $background_url ) {
 			$styles[] = '--ak-bg:url(' . esc_url_raw( $background_url ) . ')';
 		}
@@ -576,31 +580,50 @@ class Renderer {
 	public static function render_preview( ?\WP_Post $post ): string {
 		$preview = Content::preview( $post );
 		$html    = '';
+		$image   = '';
 
-		if ( $preview['image'] > 0 ) {
-			$html .= wp_get_attachment_image(
-				$preview['image'],
+		if ( (int) $preview['image'] > 0 ) {
+			$image = wp_get_attachment_image(
+				(int) $preview['image'],
 				'medium',
 				false,
 				array(
-					'class'   => 'ak-door__preview-image',
-					'loading' => 'lazy',
-					'alt'     => '',
+					'class'    => 'ak-door__preview-image',
+					'loading'  => 'lazy',
+					'decoding' => 'async',
+					'alt'      => '',
 				)
 			);
+		} elseif ( '' !== (string) $preview['url'] ) {
+			$image = sprintf(
+				'<img class="ak-door__preview-image" src="%s" alt="" loading="lazy" decoding="async" />',
+				esc_url( (string) $preview['url'] )
+			);
+		}
+
+		$html .= $image;
+
+		if ( $preview['video'] ) {
+			$html .= '<span class="ak-door__play" aria-hidden="true">'
+				. '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" focusable="false"><path d="M9 7.5v9l7.5-4.5z"/></svg>'
+				. '</span>';
 		}
 
 		if ( '' !== trim( (string) $preview['text'] ) ) {
 			$html .= '<span class="ak-door__preview-text">' . esc_html( (string) $preview['text'] ) . '</span>';
 		}
 
-		if ( '' === $html ) {
+		if ( '' === trim( $html ) ) {
 			$html = '<span class="ak-door__preview-icon" aria-hidden="true">'
 				. '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M12 3.5 14.4 9l5.6.6-4.2 4 1.2 5.6L12 16.4 6.9 19.2 8.1 13.6 4 9.6 9.6 9z"/></svg>'
 				. '</span>';
 		}
 
-		return '<span class="ak-door__preview">' . $html . '</span>';
+		// Ohne Bild bekommt die Fläche einen eigenen, helleren Ton – sonst
+		// steht bei einer dunklen Markenfarbe ein schwarzes Viereck da.
+		$classes = 'ak-door__preview' . ( '' === $image ? ' ak-door__preview--plain' : '' );
+
+		return '<span class="' . esc_attr( $classes ) . '">' . $html . '</span>';
 	}
 
 	/**

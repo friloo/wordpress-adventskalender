@@ -28,7 +28,8 @@ Weitere Funktionen:
 
 * Testmodus: öffnet alle Türchen unabhängig vom Datum
 * Redaktionsvorschau nur für angemeldete Redakteure
-* Sechs Farbwelten inklusive frei wählbarer Markenfarbe, optionaler Schneefall, optionales Hintergrundbild
+* Sechs Farbwelten inklusive frei wählbarer Markenfarbe, wählbare Schrift für die Zahlen (nur Systemschriften), optionaler Schneefall, optionales Hintergrundbild
+* Videos bekommen automatisch ein Vorschaubild: beim Speichern wird es vom Anbieter geholt und in der Mediathek abgelegt - beim Seitenaufruf entsteht keine Verbindung zu YouTube oder Vimeo
 * Shortcode `[adventskalender]` und Block „Adventskalender"
 * Barrierefrei: Tastaturbedienung, Fokusführung, reduzierte Bewegung
 * Verlinkbare Türchen: ein geöffnetes Türchen steht in der Adresszeile, die Zurück-Taste schließt die Lightbox

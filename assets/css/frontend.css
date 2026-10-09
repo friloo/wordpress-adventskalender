@@ -24,7 +24,9 @@
 	--ak-number: #f6f3e8;
 	--ak-accent: #c8a25a;
 	--ak-inside: #11261d;
+	--ak-inside-soft: #1e4b37;
 	--ak-inside-text: #f3f6f4;
+	--ak-door-number-font: var(--ak-number-font);
 	--ak-door-back: linear-gradient(155deg, #cfc7b8, #ada498);
 
 	position: relative;
@@ -51,6 +53,7 @@ html.ak-no-scroll {
 /* ---------------------------------------------------------------- Themes */
 
 .ak-calendar--theme-nordic {
+	--ak-inside-soft: #1e4b37;
 	--ak-canvas: linear-gradient(180deg, #eef3f6 0%, #dfe9ef 100%);
 	--ak-door-face: linear-gradient(155deg, #246d50 0%, #17492f 60%, #0f3524 100%);
 	--ak-number: #f7f4e9;
@@ -59,6 +62,7 @@ html.ak-no-scroll {
 }
 
 .ak-calendar--theme-elegant {
+	--ak-inside-soft: #1a2742;
 	--ak-door-back: linear-gradient(155deg, #3a4252, #262d3b);
 	--ak-canvas: linear-gradient(180deg, #11182b 0%, #0a0f1d 100%);
 	--ak-canvas-text: #e8ecf6;
@@ -70,6 +74,7 @@ html.ak-no-scroll {
 }
 
 .ak-calendar--theme-warm {
+	--ak-inside-soft: #5f2219;
 	--ak-door-back: linear-gradient(155deg, #e3cdb4, #c9ae91);
 	--ak-canvas: linear-gradient(180deg, #fdf6ec 0%, #f6e7d4 100%);
 	--ak-canvas-text: #3b2317;
@@ -80,6 +85,7 @@ html.ak-no-scroll {
 }
 
 .ak-calendar--theme-modern {
+	--ak-inside-soft: #20333a;
 	--ak-door-back: linear-gradient(155deg, #55646b, #3b474c);
 	--ak-canvas: linear-gradient(180deg, #f6f7f8 0%, #e9edef 100%);
 	--ak-canvas-text: #1b2227;
@@ -90,6 +96,7 @@ html.ak-no-scroll {
 }
 
 .ak-calendar--theme-candy {
+	--ak-inside-soft: #6a5590;
 	--ak-door-back: linear-gradient(155deg, #fdf3f8, #e6def2);
 	--ak-canvas: linear-gradient(180deg, #fff6fb 0%, #f1f3ff 100%);
 	--ak-canvas-text: #3c3350;
@@ -281,6 +288,15 @@ html.ak-no-scroll {
 	color: var(--ak-inside-text);
 }
 
+/* Ohne Bild: eine erkennbar gestaltete Fläche statt eines dunklen Lochs –
+   bei dunklen Markenfarben sähe der Kalender sonst aus wie eine Wand aus
+   schwarzen Vierecken. */
+.ak-door__preview--plain {
+	background:
+		radial-gradient(120% 90% at 30% 18%, rgba(255, 255, 255, .10), transparent 60%),
+		linear-gradient(150deg, var(--ak-inside-soft), var(--ak-inside));
+}
+
 .ak-door__preview {
 	position: absolute;
 	inset: 0;
@@ -331,6 +347,33 @@ html.ak-no-scroll {
 	z-index: 1;
 	color: var(--ak-accent);
 	opacity: .9;
+}
+
+/* Abspielsymbol, damit ein Video als Video erkennbar ist. */
+.ak-door__play {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	z-index: 2;
+	display: grid;
+	place-items: center;
+	width: clamp(28px, 26cqw, 46px);
+	height: clamp(28px, 26cqw, 46px);
+	border-radius: 50%;
+	background: rgba(12, 18, 24, .55);
+	box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, .85);
+	color: #fff;
+	transform: translate(-50%, -50%);
+	backdrop-filter: blur(2px);
+}
+
+.ak-door__play svg {
+	margin-left: 2px;
+}
+
+/* Mit Teasertext rutscht das Symbol etwas nach oben. */
+.ak-door__preview-image ~ .ak-door__play {
+	top: 42%;
 }
 
 .ak-door__lock {
@@ -417,7 +460,7 @@ html.ak-no-scroll {
 .ak-door__number {
 	position: relative;
 	z-index: 2;
-	font-family: var(--ak-number-font);
+	font-family: var(--ak-door-number-font, var(--ak-number-font));
 	font-size: 2rem; /* Rückfall ohne cq-Einheiten */
 	font-size: clamp(1.15rem, 34cqw, 2.6rem);
 	font-weight: 600;
@@ -466,6 +509,13 @@ html.ak-no-scroll {
 	/* Die geöffnete Klappe ragt über das linke Nachbartürchen. Ohne das
 	   hier würde sie dort die Klicks abfangen. */
 	pointer-events: none;
+}
+
+/* Nach der Animation verschwindet die Klappe ganz. Sonst steht am Ende
+   des Kalenders eine Wand aus aufgeklappten Türen, die ihre Nachbarn
+   überdeckt. Der Wechsel passiert, während die Lightbox darüberliegt. */
+.ak-door.is-revealed .ak-door__flap {
+	display: none;
 }
 
 /* Hinweis: kein filter/opacity auf der Klappe – beides erzwingt
@@ -1000,6 +1050,40 @@ html.ak-no-scroll {
 
 .ak-prose .wp-block-image img {
 	display: block;
+}
+
+/* Einbettungen (YouTube, Vimeo …) aus dem Block-Editor. */
+
+.ak-prose .wp-block-embed {
+	margin: 1.4em 0;
+}
+
+.ak-prose .wp-block-embed__wrapper {
+	position: relative;
+}
+
+.ak-prose .wp-block-embed.wp-has-aspect-ratio .wp-block-embed__wrapper::before {
+	content: "";
+	display: block;
+	padding-top: 56.25%;
+}
+
+.ak-prose .wp-block-embed.wp-embed-aspect-4-3 .wp-block-embed__wrapper::before { padding-top: 75%; }
+.ak-prose .wp-block-embed.wp-embed-aspect-1-1 .wp-block-embed__wrapper::before { padding-top: 100%; }
+.ak-prose .wp-block-embed.wp-embed-aspect-9-16 .wp-block-embed__wrapper::before { padding-top: 177.78%; }
+
+.ak-prose .wp-block-embed.wp-has-aspect-ratio iframe {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+}
+
+.ak-prose iframe {
+	max-width: 100%;
+	border: 0;
+	border-radius: 12px;
+	background: #0d1116;
 }
 
 .ak-prose .wp-block-gallery,

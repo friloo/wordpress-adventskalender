@@ -135,6 +135,104 @@ check( 'ungültiges Layout verworfen', false !== strpos( $evil, 'ak-calendar--cl
 check( 'ungültiges Theme verworfen', false === strpos( $evil, 'nordic&quot;' ) && false !== strpos( $evil, 'ak-calendar--theme-elegant' ) );
 check( 'Spalten auf Einstellung zurück', false !== strpos( $evil, '--ak-cols:6' ) );
 
+echo "\n== Vorschau: erstes Bild aus dem Beitrag ==\n";
+$bild_post = new WP_Post( array( 'ID' => 500, 'post_title' => 'Mit Bild', 'post_content' =>
+	'<p>Text davor.</p><figure class="wp-block-image"><img src="https://example.test/x.jpg" class="wp-image-11" alt=""/></figure>' ) );
+check( 'Mediathek-Bild über wp-image erkannt', 11 === Content::first_content_image( $bild_post )['id'] );
+
+$extern_post = new WP_Post( array( 'ID' => 501, 'post_title' => 'Extern', 'post_content' =>
+	'<p>Text</p><img src="https://cdn.example.test/foto.jpg" alt="" />' ) );
+$extern = Content::first_content_image( $extern_post );
+check( 'externes Bild über die Adresse erkannt', 0 === $extern['id'] && 'https://cdn.example.test/foto.jpg' === $extern['url'] );
+
+$ohne_post = new WP_Post( array( 'ID' => 502, 'post_title' => 'Ohne', 'post_content' => '<p>Nur Text.</p>' ) );
+check( 'ohne Bild leer', 0 === Content::first_content_image( $ohne_post )['id'] && '' === Content::first_content_image( $ohne_post )['url'] );
+check( 'leerer Inhalt leer', 0 === Content::first_content_image( new WP_Post( array( 'ID' => 503 ) ) )['id'] );
+
+// Die Vorschau greift auf das Textbild zurück.
+$GLOBALS['ak_meta'][500] = array( '_ak_day' => 1, '_ak_year' => 2026, '_ak_media_type' => 'none' );
+check( 'Vorschau nutzt das Textbild', 11 === Content::preview( $bild_post )['image'] );
+$GLOBALS['ak_meta'][501] = array( '_ak_day' => 1, '_ak_year' => 2026, '_ak_media_type' => 'none' );
+check( 'Vorschau nutzt externe Adresse', 'https://cdn.example.test/foto.jpg' === Content::preview( $extern_post )['url'] );
+$vorrang_post = new WP_Post( array( 'ID' => 504, 'post_content' => '<img class="wp-image-11" src="x">' ) );
+$GLOBALS['ak_meta'][504] = array( '_ak_day' => 1, '_ak_year' => 2026, '_ak_media_type' => 'none', '_ak_preview_image' => 12 );
+check( 'eigenes Vorschaubild hat Vorrang', 12 === Content::preview( $vorrang_post )['image'] );
+
+echo "\n== Vorschau: Videos erkennbar machen ==\n";
+$video_post = new WP_Post( array( 'ID' => 510, 'post_title' => 'Video', 'post_content' =>
+	'<figure class="wp-block-embed is-type-video wp-block-embed-youtube"><div class="wp-block-embed__wrapper">https://youtu.be/abc</div></figure>' ) );
+$GLOBALS['ak_meta'][510] = array( '_ak_day' => 1, '_ak_year' => 2026, '_ak_media_type' => 'none' );
+check( 'Video im Text erkannt', true === Content::content_has_video( $video_post ) );
+check( 'Vorschau meldet Video', true === Content::preview( $video_post )['video'] );
+check( 'Text ohne Video meldet kein Video', false === Content::content_has_video( $ohne_post ) );
+
+$markup = Renderer::render_preview( $video_post );
+check( 'Abspielsymbol gerendert', false !== strpos( $markup, 'ak-door__play' ) );
+check( 'ohne Bild eigene Fläche', false !== strpos( $markup, 'ak-door__preview--plain' ) );
+
+$GLOBALS['ak_meta'][500]['_ak_media_type'] = 'none';
+$mit_bild = Renderer::render_preview( $bild_post );
+check( 'mit Bild keine Ersatzfläche', false === strpos( $mit_bild, 'ak-door__preview--plain' ) );
+check( 'mit Bild kein Abspielsymbol', false === strpos( $mit_bild, 'ak-door__play' ) );
+$extern_markup = Renderer::render_preview( $extern_post );
+check( 'externe Adresse wird ausgegeben', false !== strpos( $extern_markup, 'cdn.example.test/foto.jpg' ) );
+
+echo "\n== Teaser aus dem Inhalt ==\n";
+$url_post = new WP_Post( array( 'ID' => 520, 'post_content' =>
+	"<!-- wp:embed {\"url\":\"https://youtu.be/abc\"} -->\n"
+	. '<figure class="wp-block-embed"><div class="wp-block-embed__wrapper">https://youtu.be/abc</div></figure>'
+	. "\n<!-- /wp:embed -->" ) );
+check( 'nackte Adresse wird kein Teaser', '' === Content::teaser_from_content( $url_post ) );
+check( 'Blockkommentare landen nicht im Teaser', false === strpos( Content::teaser_from_content( $url_post ), 'wp:embed' ) );
+
+$misch_post = new WP_Post( array( 'ID' => 521, 'post_content' =>
+	"<!-- wp:paragraph --><p>Ein echter Satz.</p><!-- /wp:paragraph -->"
+	. '<figure class="wp-block-embed"><div class="wp-block-embed__wrapper">https://youtu.be/abc</div></figure>' ) );
+check( 'echter Text bleibt Teaser', 'Ein echter Satz.' === Content::teaser_from_content( $misch_post ) );
+check( 'Adresse aus dem Teaser entfernt', false === strpos( Content::teaser_from_content( $misch_post ), 'youtu.be' ) );
+check( 'leerer Inhalt -> leerer Teaser', '' === Content::teaser_from_content( new WP_Post( array( 'ID' => 522 ) ) ) );
+
+$GLOBALS['ak_meta'][520] = array( '_ak_day' => 1, '_ak_year' => 2026, '_ak_media_type' => 'none' );
+$url_markup = Renderer::render_preview( $url_post );
+check( 'keine Adresse in der Vorschau', false === strpos( $url_markup, 'youtu.be' ) );
+check( 'stattdessen Abspielsymbol', false !== strpos( $url_markup, 'ak-door__play' ) );
+
+echo "\n== Videoadresse für das automatische Vorschaubild ==\n";
+check( 'YouTube im Text gefunden', 'https://youtu.be/abc' === Content::first_content_video_url( $url_post ) );
+check( 'Vimeo im Text gefunden', 'https://vimeo.com/12345' === Content::first_content_video_url(
+	new WP_Post( array( 'ID' => 523, 'post_content' => '<p>Text</p><p>https://vimeo.com/12345</p>' ) ) ) );
+check( 'ohne Video leer', '' === Content::first_content_video_url( new WP_Post( array( 'ID' => 524, 'post_content' => '<p>Nur Text</p>' ) ) ) );
+
+$GLOBALS['ak_meta'][530] = array(
+	'_ak_day' => 1, '_ak_year' => 2026, '_ak_media_type' => 'video',
+	'_ak_video_source' => 'embed', '_ak_video_url' => 'https://youtu.be/xyz',
+);
+$video_typ = new WP_Post( array( 'ID' => 530, 'post_content' => 'Text mit https://vimeo.com/999 darin' ) );
+check( 'Medientyp Video hat Vorrang', 'https://youtu.be/xyz' === \Adventskalender\Poster::source_url( $video_typ ) );
+$GLOBALS['ak_meta'][530]['_ak_video_source'] = 'file';
+check( 'Mediathek-Video braucht keine Abfrage', '' === \Adventskalender\Poster::source_url( $video_typ ) );
+$GLOBALS['ak_meta'][520]['_ak_media_type'] = 'none';
+check( 'sonst aus dem Text', 'https://youtu.be/abc' === \Adventskalender\Poster::source_url( $url_post ) );
+
+// Das automatisch geholte Bild greift erst nach den eigenen Angaben.
+$GLOBALS['ak_meta'][520]['_ak_auto_poster'] = 13;
+check( 'automatisches Bild wird genutzt', 13 === Content::preview( $url_post )['image'] );
+$GLOBALS['ak_meta'][520]['_ak_preview_image'] = 11;
+check( 'eigenes Bild bleibt vorrangig', 11 === Content::preview( $url_post )['image'] );
+unset( $GLOBALS['ak_meta'][520]['_ak_preview_image'], $GLOBALS['ak_meta'][520]['_ak_auto_poster'] );
+
+echo "\n== Schrift der Zahlen ==\n";
+check( 'Voreinstellung Serif', 'serif' === Settings::defaults()['number_font'] );
+check( 'ungültiger Wert -> Serif', 'serif' === Settings::sanitize( array( 'number_font' => 'comic' ) )['number_font'] );
+check( 'gültiger Wert bleibt', 'mono' === Settings::sanitize( array( 'number_font' => 'mono' ) )['number_font'] );
+check( 'nur Systemschriften', 0 === count( array_filter( Settings::number_fonts(), function ( $f ) {
+	return (bool) preg_match( '#https?://|@import|url\(#i', $f['stack'] );
+} ) ) );
+update_option( Settings::OPTION, array_merge( Settings::get(), array( 'number_font' => 'mono' ) ) );
+$font_html = Renderer::shortcode( array() );
+check( 'Schrift als CSS-Variable', false !== strpos( $font_html, '--ak-door-number-font:ui-monospace' ) );
+update_option( Settings::OPTION, array_merge( Settings::get(), array( 'number_font' => 'serif' ) ) );
+
 echo "\n== Bildgrößen für Mosaik und Hintergrund ==\n";
 // Ein großes Foto mit den üblichen WordPress-Zwischengrößen.
 $GLOBALS['ak_attachment_meta'][11] = array(
@@ -214,6 +312,32 @@ check( 'Blockkommentare entfernt', false === strpos( $blocks, '<!-- wp:' ) );
 check( 'Blockmarkup erhalten', false !== strpos( $blocks, 'wp-block-image alignleft' ) );
 check( 'kein wpautop um Blöcke', false === strpos( $blocks, '<p><figure' ) && false === strpos( $blocks, '<p></p>' ) );
 check( 'Blockunterschrift erhalten', false !== strpos( $blocks, 'wp-element-caption' ) );
+
+echo "\n== Einbettungen im Inhalt ==\n";
+// Genau das Markup, das Gutenberg für einen YouTube-Block speichert:
+// die nackte URL steht im Wrapper und wird erst durch autoembed() zum
+// Player. Ohne diesen Schritt stand die Adresse als Text in der Lightbox.
+$GLOBALS['ak_doors'][1]->post_content =
+	"<!-- wp:embed {\"url\":\"https://youtu.be/I8v489Y7g4o\",\"type\":\"video\",\"providerNameSlug\":\"youtube\"} -->\n"
+	. '<figure class="wp-block-embed is-type-video is-provider-youtube wp-block-embed-youtube wp-embed-aspect-16-9 wp-has-aspect-ratio">'
+	. "<div class=\"wp-block-embed__wrapper\">\nhttps://youtu.be/I8v489Y7g4o\n</div></figure>\n<!-- /wp:embed -->";
+$embed = Content::render( $GLOBALS['ak_doors'][1], 1 );
+check( 'URL wurde zum Player', false !== strpos( $embed, '<iframe' ) );
+check( 'keine nackte Adresse mehr im Text', false === strpos( $embed, ">\nhttps://youtu.be" ) );
+check( 'Blockhülle bleibt erhalten', false !== strpos( $embed, 'wp-block-embed__wrapper' ) );
+check( 'Seitenverhältnis-Klasse bleibt', false !== strpos( $embed, 'wp-embed-aspect-16-9' ) );
+
+// [embed]-Shortcode aus dem klassischen Editor.
+$GLOBALS['ak_doors'][1]->post_content = "Vorher\n\n[embed]https://vimeo.com/123456[/embed]\n\nNachher";
+$shortcode_embed = Content::render( $GLOBALS['ak_doors'][1], 1 );
+check( '[embed]-Shortcode aufgelöst', false !== strpos( $shortcode_embed, '<iframe' ) );
+check( 'Text drumherum bleibt', false !== strpos( $shortcode_embed, 'Vorher' ) && false !== strpos( $shortcode_embed, 'Nachher' ) );
+
+// Der globale Beitragskontext darf nicht hängen bleiben.
+$GLOBALS['post'] = 'unberuehrt';
+Content::render( $GLOBALS['ak_doors'][1], 1 );
+check( 'globaler Beitrag wiederhergestellt', 'unberuehrt' === $GLOBALS['post'] );
+unset( $GLOBALS['post'] );
 
 // Klassischer Inhalt bekommt weiterhin Absätze.
 $GLOBALS['ak_doors'][1]->post_content = "Zeile eins.\n\nZeile zwei.";

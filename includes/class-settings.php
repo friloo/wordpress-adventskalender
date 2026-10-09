@@ -51,6 +51,54 @@ class Settings {
 	}
 
 	/**
+	 * Schriftarten für die Zahlen auf den Türchen.
+	 *
+	 * Ausschließlich Systemschriften: es wird nichts nachgeladen, also
+	 * entstehen weder Wartezeiten noch Verbindungen zu fremden Servern.
+	 *
+	 * @return array<string,array{label:string,stack:string}>
+	 */
+	public static function number_fonts(): array {
+		return array(
+			'serif'   => array(
+				'label' => __( 'Serif – klassisch und festlich', 'adventskalender' ),
+				'stack' => 'ui-serif, Georgia, "Iowan Old Style", "Palatino Linotype", "Times New Roman", serif',
+			),
+			'sans'    => array(
+				'label' => __( 'Serifenlos – schlicht und modern', 'adventskalender' ),
+				'stack' => 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+			),
+			'rounded' => array(
+				'label' => __( 'Rund – freundlich', 'adventskalender' ),
+				'stack' => '"SF Pro Rounded", "Hiragino Maru Gothic ProN", "Varela Round", "Trebuchet MS", system-ui, sans-serif',
+			),
+			'mono'    => array(
+				'label' => __( 'Schreibmaschine – technisch', 'adventskalender' ),
+				'stack' => 'ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace',
+			),
+			'script'  => array(
+				'label' => __( 'Handschrift – verspielt', 'adventskalender' ),
+				'stack' => '"Segoe Script", "Bradley Hand", "Snell Roundhand", "Brush Script MT", cursive',
+			),
+			'theme'   => array(
+				'label' => __( 'Wie die Website', 'adventskalender' ),
+				'stack' => 'inherit',
+			),
+		);
+	}
+
+	/**
+	 * Schriftstapel der eingestellten Türchen-Schrift.
+	 *
+	 * @param string $key Schlüssel aus number_fonts().
+	 */
+	public static function number_font_stack( string $key ): string {
+		$fonts = self::number_fonts();
+
+		return $fonts[ $key ]['stack'] ?? $fonts['serif']['stack'];
+	}
+
+	/**
 	 * Benötigte Berechtigung für die Türchen-Verwaltung.
 	 *
 	 * Bewusst hier und nicht in der Adminklasse: auch der REST-Controller
@@ -89,6 +137,7 @@ class Settings {
 			'editor_preview'    => 1,
 			'layout'            => 'classic',
 			'theme'             => 'nordic',
+			'number_font'       => 'serif',
 			'brand_color'       => '#1f5f46',
 			'brand_scheme'      => 'light',
 			'editor'            => 'block',
@@ -197,6 +246,10 @@ class Settings {
 		foreach ( array( 'mosaic_image', 'background_image' ) as $media_key ) {
 			$out[ $media_key ] = isset( $input[ $media_key ] ) ? self::sanitize_attachment_id( $input[ $media_key ] ) : 0;
 		}
+
+		$out['number_font'] = isset( $input['number_font'] ) && array_key_exists( $input['number_font'], self::number_fonts() )
+			? $input['number_font']
+			: $defaults['number_font'];
 
 		$out['editor'] = isset( $input['editor'] ) && array_key_exists( $input['editor'], self::editors() )
 			? $input['editor']

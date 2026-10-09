@@ -371,6 +371,9 @@ class Color {
 			$inside   = self::tint( $brand, 0.65, 0.10 );
 		}
 
+		// Hellere Variante für Vorschauflächen ohne Bild.
+		$inside_soft = self::tint( $brand, 0.50, $dark ? 0.22 : 0.27 );
+
 		// Lesbarkeit erzwingen statt hoffen.
 		$text   = self::ensure_contrast( $text, $canvas, 7.0 );
 		$number = self::readable_on(
@@ -384,9 +387,11 @@ class Color {
 		// weit angepasst, dass sie auf der Fläche sichtbar bleibt.
 		$accent = self::ensure_contrast( $brand, $canvas, self::CONTRAST_UI );
 
+		// Gegen die hellere Fläche prüfen – dort ist der Kontrast knapper
+		// als auf dem dunklen Innenraum.
 		$inside_text = self::ensure_contrast(
 			self::tint( $brand, 0.18, 0.96 ),
-			$inside,
+			$inside_soft,
 			self::CONTRAST_TEXT
 		);
 
@@ -429,6 +434,7 @@ class Color {
 			'--ak-accent'      => $accent,
 			'--ak-knob'        => $knob,
 			'--ak-inside'      => $inside,
+			'--ak-inside-soft' => $inside_soft,
 			'--ak-inside-text' => $inside_text,
 		);
 	}
@@ -466,7 +472,10 @@ class Color {
 			),
 			'teaser_on_inside' => array(
 				'label'  => __( 'Vorschautext hinter dem Türchen', 'adventskalender' ),
-				'ratio'  => self::contrast( $palette['--ak-inside-text'], $palette['--ak-inside'] ),
+				'ratio'  => min(
+					self::contrast( $palette['--ak-inside-text'], $palette['--ak-inside'] ),
+					self::contrast( $palette['--ak-inside-text'], $palette['--ak-inside-soft'] )
+				),
 				'target' => self::CONTRAST_TEXT,
 			),
 		);

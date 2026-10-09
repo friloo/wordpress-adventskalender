@@ -56,6 +56,21 @@ function wp_oembed_get( $url, $args = array() ) { return '<iframe src="https://p
 function wp_http_validate_url( $url ) { return (bool) filter_var( $url, FILTER_VALIDATE_URL ); }
 function home_url() { return 'https://example.test'; }
 function wp_parse_url( $url, $component = -1 ) { return -1 === $component ? parse_url( $url ) : parse_url( $url, $component ); }
+/** Attrappe von WP_Embed: wandelt nackte URLs in Einbettungen. */
+class AK_Fake_Embed {
+	public function run_shortcode( $content ) {
+		return preg_replace( '#\[embed\](.*?)\[/embed\]#s', '$1', (string) $content );
+	}
+	public function autoembed( $content ) {
+		return preg_replace(
+			'|^(\s*)(https?://[^\s<>"]+)(\s*)$|im',
+			'$1<iframe src="$2" title="Einbettung"></iframe>$3',
+			(string) $content
+		);
+	}
+}
+$GLOBALS['wp_embed'] = new AK_Fake_Embed();
+
 function has_blocks( $c ) { return false !== strpos( (string) $c, '<!-- wp:' ); }
 function do_blocks( $c ) {
 	// Grobe Nachbildung: Blockkommentare entfernen, Markup behalten.
@@ -105,5 +120,6 @@ function plugin_dir_url( $f ) { return 'https://example.test/wp-content/plugins/
 $base = __DIR__ . '/../includes/';
 require_once $base . 'class-doors.php';
 require_once $base . 'class-content.php';
+require_once $base . 'class-poster.php';
 require_once $base . 'class-renderer.php';
 require_once $base . 'class-rest.php';

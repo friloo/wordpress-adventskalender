@@ -19,6 +19,8 @@ oder Text mit Bildern.
 * **Sechs Farbwelten**: Nordisch, Elegant, Warm, Modern, Candy – und
   **Markenfarbe**: du trägst deinen Firmen-Hex-Wert ein, alles andere wird
   daraus abgeleitet (siehe unten).
+* **Schrift der Zahlen wählbar** – sechs Varianten, ausschließlich
+  Systemschriften. Es wird nichts nachgeladen.
 * **Testmodus** – öffnet alle Türchen unabhängig vom Datum, mit deutlichem Hinweis.
 * **Redaktionsvorschau** – angemeldete Redakteure sehen alles, Besucher nur das Freigeschaltete.
 * **Sicher:** gesperrte Inhalte liegen nie im Quellcode der Seite. Sie werden erst nach
@@ -30,6 +32,8 @@ oder Text mit Bildern.
 * **Verlinkbare Türchen:** Ein geöffnetes Türchen steht in der Adresszeile
   (`?tuerchen=7`). Der Link lässt sich teilen, und die Zurück-Taste schließt
   die Lightbox, statt die Seite zu verlassen.
+* **Aufgeräumt nach dem Öffnen:** Die aufgeklappte Tür verschwindet nach der
+  Animation, damit sie nicht über dem Nachbartürchen liegen bleibt.
 
 ## Installation
 
@@ -68,6 +72,33 @@ Anforderungen: WordPress 6.2+, PHP 7.4+.
 
 Im Block-Editor nach **Adventskalender** suchen. Alle Optionen stehen in der
 Seitenleiste; leer gelassene Felder übernehmen die globalen Einstellungen.
+
+## Was hinter dem Türchen zu sehen ist
+
+Sobald ein Türchen offen ist, zeigt es eine kleine Vorschau. Das Bild dafür
+sucht das Plugin in dieser Reihenfolge:
+
+1. das im Feld **Vorschaubild** gesetzte Bild
+2. das **Titelbild** bzw. das erste Bild einer Galerie oder das Video-Vorschaubild
+3. ein **automatisch geholtes Videobild** (siehe unten)
+4. das **erste Bild aus dem Beitragstext**
+
+Findet sich keines, bekommt die Fläche einen eigenen, helleren Ton aus der
+Farbpalette statt eines dunklen Lochs – bei dunklen Markenfarben sähe der
+Kalender sonst aus wie eine Wand aus schwarzen Vierecken. Steckt im Türchen
+ein Video, liegt zusätzlich ein Abspielsymbol auf der Vorschau.
+
+### Videos bekommen automatisch ein Vorschaubild
+
+Wird ein YouTube- oder Vimeo-Video eingebunden – als Medium oder einfach als
+Block im Text – holt das Plugin beim **Speichern** einmalig das Vorschaubild
+des Anbieters und legt es in der Mediathek ab.
+
+Bewusst beim Speichern und nicht beim Ausliefern: So entsteht beim Aufruf der
+Seite **keine Verbindung zu YouTube oder Vimeo**, das Bild liegt auf dem
+eigenen Server. Die Redaktion sieht im Bearbeitungsfenster, woher es stammt,
+und kann jederzeit ein eigenes Bild setzen. Abschalten lässt sich das über den
+Filter `adventskalender_fetch_video_poster`.
 
 ## Türchen verlinken
 
@@ -220,6 +251,7 @@ Den Testmodus kann man direkt auf der Übersichtsseite ein- und ausschalten.
 | `adventskalender_arrangement`         | Anordnung der Türchen bestimmen            |
 | `adventskalender_date_format`         | Datumsformat der Hinweise                  |
 | `adventskalender_url_parameter`       | Abfrageparameter für verlinkte Türchen     |
+| `adventskalender_fetch_video_poster`  | Automatisches Video-Vorschaubild abschalten |
 | `adventskalender_door_payload`        | Daten eines Türchens anpassen              |
 | `adventskalender_door_html`           | Lightbox-Markup anpassen                   |
 | `adventskalender_manage_capability`   | Capability der Türchen-Verwaltung und der REST-Sperre |
